@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CarePath — Disabilities</title>
+  <style>
+    /* ── Tokens ──────────────────────────────────────────────────── */
+    :root {
+      --bg:           #F8F5EF;
+      --surface:      #FFFFFF;
+      --border:       #E5E7EB;
+      --primary:      #0B2D5C;
+      --primary-dark: #071E3E;
+      --accent:       #F3D26A;
+      --accent-pale:  #FEF9EC;
+      --text:         #0F172A;
+      --muted:        #64748B;
+      --light-blue:   #89B4D8;
+      --sidebar-w:    200px;
+      --radius:       10px;
+    }
+
+    /* ── Reset ───────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           font-size: 16px; line-height: 1.6; color: var(--text); background: var(--bg); }
+    a { text-decoration: none; }
+
+    /* ── App shell ───────────────────────────────────────────────── */
+    .app-shell { display: flex; min-height: 100vh; }
+
+    /* ── Sidebar ─────────────────────────────────────────────────── */
+    .sidebar {
+      position: fixed; top: 0; left: 0;
+      width: var(--sidebar-w); height: 100vh;
+      background: var(--primary);
+      display: flex; flex-direction: column;
+      z-index: 200; overflow-y: auto;
+    }
+    .sidebar-logo {
+      padding: 28px 20px 22px;
+      display: flex; align-items: center; gap: 11px;
+      border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0;
+    }
+    .logo-mark {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--accent); color: var(--primary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.88rem; font-weight: 800; flex-shrink: 0;
+    }
+    .sidebar-logo span { color: #fff; font-weight: 700; font-size: 1rem; letter-spacing: -0.01em; }
+    .sidebar-nav { padding: 10px 0; flex: 1; }
+    .sidebar-nav a {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 20px; font-size: 0.875rem; font-weight: 500;
+      color: rgba(255,255,255,0.58); text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .sidebar-nav a:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.88); }
+    .sidebar-nav a.active {
+      background: rgba(243,210,106,0.12); color: #fff;
+      border-left-color: var(--accent); font-weight: 600;
+    }
+    .sidebar-nav .nav-icon { font-size: 1rem; opacity: 0.7; flex-shrink: 0; }
+    .sidebar-nav a.active .nav-icon { opacity: 1; }
+
+    /* ── Main content ────────────────────────────────────────────── */
+    .main-content { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; }
+    .page-container { max-width: 1100px; margin: 0 auto; padding: 52px 40px 80px; }
+
+    /* ── Page header ─────────────────────────────────────────────── */
+    .page-header { margin-bottom: 48px; }
+    .page-header h1 {
+      font-size: 2rem; font-weight: 800; color: var(--primary);
+      letter-spacing: -0.02em; margin-bottom: 10px;
+    }
+    .page-header p { font-size: 1rem; color: var(--muted); max-width: 540px; line-height: 1.7; }
+
+    /* ── Grid ────────────────────────────────────────────────────── */
+    .disability-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+    }
+    @media (max-width: 900px)  { .disability-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px)  { .disability-grid { grid-template-columns: 1fr; } }
+
+    /* ── Card ────────────────────────────────────────────────────── */
+    .disability-card {
+      display: flex; flex-direction: column;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 26px 22px 20px;
+      color: var(--text);
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+      cursor: pointer;
+    }
+    .disability-card:hover {
+      border-color: var(--light-blue);
+      box-shadow: 0 4px 18px rgba(11,45,92,0.09);
+      transform: translateY(-2px);
+    }
+    .card-bar { width: 32px; height: 3px; background: var(--accent); border-radius: 2px; margin-bottom: 16px; }
+    .disability-card h2 {
+      font-size: 1.05rem; font-weight: 700; color: var(--primary); margin-bottom: 8px;
+    }
+    .disability-card .tagline { font-size: 0.82rem; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
+    .disability-card .preview { font-size: 0.88rem; color: #334155; line-height: 1.6; flex: 1; margin-bottom: 18px; }
+    .learn-more {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.82rem; font-weight: 600; color: var(--primary);
+      padding: 6px 14px; border: 1.5px solid var(--primary);
+      border-radius: 6px; align-self: flex-start;
+      transition: background 0.15s, color 0.15s;
+    }
+    .disability-card:hover .learn-more { background: var(--primary); color: #fff; }
+
+    /* ── Mobile sidebar → top bar ────────────────────────────────── */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%; height: 56px; flex-direction: row;
+        align-items: center; position: fixed; top: 0;
+        overflow-x: auto; overflow-y: hidden;
+      }
+      .sidebar-logo { padding: 0 16px; border-bottom: none; border-right: 1px solid rgba(255,255,255,0.15); }
+      .sidebar-nav { display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
+      .sidebar-nav a { padding: 0 14px; height: 56px; border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; }
+      .sidebar-nav a.active { border-bottom-color: var(--accent); border-left-color: transparent; }
+      .main-content { margin-left: 0; margin-top: 56px; }
+      .page-container { padding: 32px 20px 60px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ─────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">C</div>
+      <span>CarePath</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/" class="active">
+        <span class="nav-icon">⊙</span> Disabilities
+      </a>
+      <a href="/carenetwork">
+        <span class="nav-icon">◎</span> Learning Support
+      </a>
+      <a href="/docbreakdown">
+        <span class="nav-icon">▣</span> Medical Breakdown
+      </a>
+      <a href="/iep">
+        <span class="nav-icon">◈</span> IEP Analysis
+      </a>
+    </nav>
+  </aside>
+
+  <!-- ── MAIN CONTENT ─────────────────────────────────────────── -->
+  <main class="main-content">
+    <div class="page-container">
+      <header class="page-header">
+        <h1>Disabilities</h1>
+        <p>Clear, honest information about how each learning difference works — written for parents, caregivers, and anyone who wants to understand.</p>
+      </header>
+
+      <div class="disability-grid" id="grid"></div>
+    </div>
+  </main>
+
+</div>
+
+<script src="/disabilities/data.js"></script>
+<script>
+  Object.values(DISABILITIES).forEach(function(disability) {
+    var card = document.createElement('a');
+    card.href = '/disabilities/detail?id=' + disability.id;
+    card.className = 'disability-card';
+    card.innerHTML =
+      '<div class="card-bar"></div>' +
+      '<h2>' + disability.name + '</h2>' +
+      '<p class="tagline">' + disability.tagline + '</p>' +
+      '<p class="preview">' + disability.preview + '</p>' +
+      '<span class="learn-more">Learn more →</span>';
+    document.getElementById('grid').appendChild(card);
+  });
+</script>
+</body>
+</html>

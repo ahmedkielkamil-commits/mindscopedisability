@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CarePath — IEP Analysis</title>
+  <style>
+    /* ── Tokens ──────────────────────────────────────────────────── */
+    :root {
+      --bg: #F8F5EF; --surface: #FFFFFF; --border: #E5E7EB;
+      --primary: #0B2D5C; --accent: #F3D26A; --accent-pale: #FEF9EC;
+      --text: #0F172A; --muted: #64748B; --light-blue: #89B4D8;
+      --sidebar-w: 200px; --radius: 10px;
+      --good:  #16A34A; --good-pale:  #DCFCE7;
+      --mid:   #D97706; --mid-pale:   #FEF3C7;
+      --low:   #DC2626; --low-pale:   #FEE2E2;
+      --minor-color:    #EAB308;
+      --caution-color:  #F97316;
+      --critical-color: #EF4444;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           font-size: 16px; line-height: 1.6; color: var(--text); background: var(--bg); }
+    a { text-decoration: none; }
+
+    .app-shell { display: flex; min-height: 100vh; }
+
+    /* ── Sidebar ─────────────────────────────────────────────────── */
+    .sidebar {
+      position: fixed; top: 0; left: 0;
+      width: var(--sidebar-w); height: 100vh;
+      background: var(--primary);
+      display: flex; flex-direction: column;
+      z-index: 200; overflow-y: auto;
+    }
+    .sidebar-logo {
+      padding: 28px 20px 22px; display: flex; align-items: center; gap: 11px;
+      border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0;
+    }
+    .logo-mark {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--accent); color: var(--primary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.88rem; font-weight: 800; flex-shrink: 0;
+    }
+    .sidebar-logo span { color: #fff; font-weight: 700; font-size: 1rem; }
+    .sidebar-nav { padding: 10px 0; flex: 1; }
+    .sidebar-nav a {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 20px; font-size: 0.875rem; font-weight: 500;
+      color: rgba(255,255,255,0.58); border-left: 3px solid transparent;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .sidebar-nav a:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.88); }
+    .sidebar-nav a.active { background: rgba(243,210,106,0.12); color: #fff; border-left-color: var(--accent); font-weight: 600; }
+    .nav-icon { font-size: 1rem; opacity: 0.7; flex-shrink: 0; }
+    .sidebar-nav a.active .nav-icon { opacity: 1; }
+
+    .main-content { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; }
+    .page-container { max-width: 860px; margin: 0 auto; padding: 52px 40px 80px; }
+
+    /* ── Page header ─────────────────────────────────────────────── */
+    .page-header { margin-bottom: 36px; }
+    .page-header h1 {
+      font-size: 2rem; font-weight: 800; color: var(--primary);
+      letter-spacing: -0.02em; margin-bottom: 8px;
+    }
+    .page-header p { font-size: 0.975rem; color: var(--muted); max-width: 500px; }
+
+    /* ── Upload card ─────────────────────────────────────────────── */
+    .form-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 32px 28px; margin-bottom: 22px;
+    }
+    .upload-zone {
+      border: 2px dashed var(--border); border-radius: 8px;
+      padding: 52px 24px; text-align: center;
+      background: var(--bg); margin-bottom: 22px; transition: border-color 0.15s;
+    }
+    .upload-zone.drag-over { border-color: var(--light-blue); background: #EEF5FF; }
+    .upload-zone p { font-size: 0.95rem; color: var(--muted); margin-bottom: 14px; }
+    .upload-zone input[type="file"] { display: none; }
+    .upload-label {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 20px; background: var(--surface);
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 0.875rem; font-weight: 600; color: var(--primary);
+      cursor: pointer; transition: border-color 0.15s, background 0.15s;
+    }
+    .upload-label:hover { border-color: var(--primary); background: var(--accent-pale); }
+    #file-name-display { font-size: 0.84rem; color: var(--muted); margin-top: 10px; min-height: 20px; }
+    .accept-hint { font-size: 0.78rem; color: #94A3B8; margin-top: 4px; }
+
+    .submit-btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 11px 24px; background: var(--primary); color: #fff;
+      border: none; border-radius: 8px; font-size: 0.9rem;
+      font-weight: 600; font-family: inherit; cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .submit-btn:hover { background: #08244A; }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 20px; background: var(--surface);
+      border: 1.5px solid var(--primary); border-radius: 8px;
+      font-size: 0.875rem; font-weight: 600; color: var(--primary);
+      font-family: inherit; cursor: pointer; transition: background 0.15s;
+    }
+    .btn-secondary:hover { background: var(--accent-pale); }
+
+    /* ── Loading / status ────────────────────────────────────────── */
+    .status-bar { font-size: 0.88rem; color: var(--muted); min-height: 22px; margin-top: 14px; }
+    .status-bar.error { color: #DC2626; }
+    .loading-bar {
+      display: none; height: 3px; background: var(--border);
+      border-radius: 2px; margin-top: 14px; overflow: hidden;
+    }
+    .loading-bar.active { display: block; }
+    .loading-bar::after {
+      content: ''; display: block; height: 100%; width: 40%;
+      background: var(--accent); border-radius: 2px;
+      animation: sweep 1.4s ease-in-out infinite;
+    }
+    @keyframes sweep { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+
+    /* ── RESULTS STATE ───────────────────────────────────────────── */
+    #results-state { display: none; }
+    #results-state.visible { display: block; }
+
+    /* Results action bar */
+    .results-action-bar {
+      display: flex; align-items: flex-start; gap: 14px;
+      flex-wrap: wrap; margin-bottom: 28px;
+    }
+    .results-title { flex: 1; }
+    .results-title h1 {
+      font-size: 1.9rem; font-weight: 800; color: var(--primary);
+      letter-spacing: -0.02em; margin-bottom: 4px;
+    }
+    .results-title .results-file { font-size: 0.86rem; color: var(--muted); }
+
+    /* Analysis Complete banner */
+    .complete-banner {
+      display: flex; align-items: center; gap: 14px;
+      background: #ECFDF5; border: 1px solid #86EFAC;
+      border-radius: var(--radius); padding: 14px 18px; margin-bottom: 32px;
+    }
+    .complete-icon {
+      width: 36px; height: 36px; border-radius: 50%; background: #22C55E;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; color: #fff; flex-shrink: 0;
+    }
+    .complete-text strong { display: block; font-size: 0.95rem; font-weight: 700; color: #166534; }
+    .complete-text span { font-size: 0.84rem; color: #166534; }
+
+    /* ── Section block ───────────────────────────────────────────── */
+    .result-section { margin-bottom: 36px; }
+    .result-section-hdr {
+      font-size: 0.73rem; font-weight: 700; letter-spacing: 0.09em;
+      text-transform: uppercase; color: var(--muted);
+      display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+    }
+    .result-section-hdr::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .section-badge {
+      background: var(--accent-pale); border: 1px solid var(--accent);
+      border-radius: 20px; padding: 1px 10px;
+      font-size: 0.72rem; font-weight: 700; color: var(--primary);
+    }
+
+    /* ── Score rows (full-width) ─────────────────────────────────── */
+    .score-rows { display: flex; flex-direction: column; gap: 10px; }
+    .score-row {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px;
+    }
+    .score-row-top {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+    }
+    .score-name { font-size: 0.9rem; font-weight: 700; color: var(--primary); flex: 1; }
+    .score-pill {
+      padding: 3px 12px; border-radius: 20px;
+      font-size: 0.78rem; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+    .score-pill.good { background: var(--good); }
+    .score-pill.mid  { background: var(--mid); }
+    .score-pill.low  { background: var(--low); }
+    .score-track {
+      height: 5px; background: var(--border); border-radius: 3px;
+      overflow: hidden; margin-bottom: 8px;
+    }
+    .score-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+    .score-fill.good { background: var(--good); }
+    .score-fill.mid  { background: var(--mid); }
+    .score-fill.low  { background: var(--low); }
+    .score-reasoning { font-size: 0.855rem; color: #475569; line-height: 1.6; }
+
+    /* ── Red flags ───────────────────────────────────────────────── */
+    .flags-col { display: flex; flex-direction: column; gap: 10px; }
+    .flag-group {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+    }
+    .flag-group-hdr {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 16px; border-bottom: 1px solid var(--border);
+    }
+    .flag-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .flag-group.minor   .flag-dot { background: var(--minor-color); }
+    .flag-group.caution  .flag-dot { background: var(--caution-color); }
+    .flag-group.critical .flag-dot { background: var(--critical-color); }
+    .flag-group-name {
+      font-size: 0.78rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+    }
+    .flag-group.minor   .flag-group-name { color: #854D0E; }
+    .flag-group.caution  .flag-group-name { color: #9A3412; }
+    .flag-group.critical .flag-group-name { color: #991B1B; }
+    .flag-count {
+      margin-left: auto; font-size: 0.76rem; font-weight: 700;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 20px; padding: 1px 8px; color: var(--muted);
+    }
+    .flag-items { padding: 0; }
+    .flag-item {
+      padding: 12px 16px; border-left: 3px solid;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .flag-item:last-child { border-bottom: none; }
+    .flag-group.minor   .flag-item { border-left-color: var(--minor-color); }
+    .flag-group.caution  .flag-item { border-left-color: var(--caution-color); }
+    .flag-group.critical .flag-item { border-left-color: var(--critical-color); }
+    .flag-sec-name { font-size: 0.78rem; font-weight: 700; color: var(--muted); margin-bottom: 3px; }
+    .flag-issue { font-size: 0.875rem; color: var(--text); line-height: 1.5; }
+    .no-flags { padding: 14px 16px; font-size: 0.875rem; color: #94A3B8; font-style: italic; }
+
+    /* ── Summary ─────────────────────────────────────────────────── */
+    .summary-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 20px 22px;
+      font-size: 0.94rem; line-height: 1.85; color: #1E293B;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { width: 100%; height: 56px; flex-direction: row; align-items: center; position: fixed; top: 0; overflow-x: auto; overflow-y: hidden; }
+      .sidebar-logo { padding: 0 16px; border-bottom: none; border-right: 1px solid rgba(255,255,255,0.15); }
+      .sidebar-nav { display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
+      .sidebar-nav a { padding: 0 14px; height: 56px; border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; }
+      .sidebar-nav a.active { border-bottom-color: var(--accent); border-left-color: transparent; }
+      .main-content { margin-left: 0; margin-top: 56px; }
+      .page-container { padding: 32px 20px 60px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">C</div>
+      <span>CarePath</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/"><span class="nav-icon">⊙</span> Disabilities</a>
+      <a href="/carenetwork"><span class="nav-icon">◎</span> Learning Support</a>
+      <a href="/docbreakdown"><span class="nav-icon">▣</span> Medical Breakdown</a>
+      <a href="/iep" class="active"><span class="nav-icon">◈</span> IEP Analysis</a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-container">
+
+      <!-- ── UPLOAD STATE ───────────────────────────────────────── -->
+      <div id="upload-state">
+        <header class="page-header">
+          <h1>IEP Analysis</h1>
+          <p>Upload an IEP as a PDF, Word (.docx), or plain text. You will see section scores, red flags by severity, and a parent summary.</p>
+        </header>
+
+        <div class="form-card">
+          <form id="upload-form">
+            <div class="upload-zone" id="upload-zone">
+              <p>Drag &amp; drop your IEP here, or click to browse</p>
+              <label class="upload-label" for="file-input">Choose File</label>
+              <input
+                type="file" id="file-input" name="file"
+                accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+                required
+              />
+              <p id="file-name-display">No file selected</p>
+              <p class="accept-hint">Accepts: .pdf, .docx, .txt</p>
+            </div>
+            <button class="submit-btn" type="submit" id="submit-btn">Analyze →</button>
+          </form>
+          <p class="status-bar" id="status"></p>
+          <div class="loading-bar" id="loading-bar"></div>
+        </div>
+      </div>
+
+      <!-- ── RESULTS STATE ──────────────────────────────────────── -->
+      <div id="results-state">
+
+        <div class="results-action-bar">
+          <div class="results-title">
+            <h1>Analysis Complete</h1>
+            <p class="results-file" id="results-file"></p>
+          </div>
+          <button class="btn-secondary" id="new-file-btn">Analyze New File</button>
+        </div>
+
+        <div class="complete-banner">
+          <div class="complete-icon">✓</div>
+          <div class="complete-text">
+            <strong>Analysis Complete</strong>
+            <span>All eight IEP sections scored — red flags identified by severity — parent summary generated.</span>
+          </div>
+        </div>
+
+        <div id="results-content"></div>
+
+      </div>
+    </div>
+  </main>
+
+</div>
+<script>
+  var fileInput  = document.getElementById('file-input');
+  var submitBtn  = document.getElementById('submit-btn');
+  var loadingBar = document.getElementById('loading-bar');
+  var statusEl   = document.getElementById('status');
+
+  /* ── File input ──────────────────────────────────────────────── */
+  fileInput.addEventListener('change', function() {
+    document.getElementById('file-name-display').textContent =
+      fileInput.files.length ? fileInput.files[0].name : 'No file selected';
+  });
+
+  /* Drag-and-drop */
+  var zone = document.getElementById('upload-zone');
+  zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', function() { zone.classList.remove('drag-over'); });
+  zone.addEventListener('drop', function(e) {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    if (e.dataTransfer.files.length) {
+      fileInput.files = e.dataTransfer.files;
+      document.getElementById('file-name-display').textContent = e.dataTransfer.files[0].name;
+    }
+  });
+
+  /* ── Reset to upload ─────────────────────────────────────────── */
+  document.getElementById('new-file-btn').addEventListener('click', function() {
+    document.getElementById('results-state').classList.remove('visible');
+    document.getElementById('upload-state').style.display = '';
+    document.getElementById('results-content').innerHTML = '';
+    statusEl.textContent = ''; statusEl.className = 'status-bar';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  /* ── Helpers ─────────────────────────────────────────────────── */
+  function cls(score) { return score >= 7 ? 'good' : score >= 4 ? 'mid' : 'low'; }
+
+  /* ── Render result ───────────────────────────────────────────── */
+  function renderResult(data, fileName) {
+    var container = document.getElementById('results-content');
+    container.innerHTML = '';
+
+    /* ── SECTION SCORES (full-width rows) ── */
+    var sSec = mkSec('Section Scores', (data.sections || []).length + ' sections');
+    var rows = document.createElement('div');
+    rows.className = 'score-rows';
+    (data.sections || []).forEach(function(sec) {
+      var c = cls(sec.score);
+      var row = document.createElement('div');
+      row.className = 'score-row';
+      row.innerHTML =
+        '<div class="score-row-top">' +
+          '<span class="score-name">' + (sec.name || '') + '</span>' +
+          '<span class="score-pill ' + c + '">' + (sec.score != null ? sec.score : '—') + ' / 10</span>' +
+        '</div>' +
+        '<div class="score-track"><div class="score-fill ' + c + '" style="width:' + ((sec.score || 0) * 10) + '%"></div></div>' +
+        '<p class="score-reasoning">' + (sec.reasoning || '') + '</p>';
+      rows.appendChild(row);
+    });
+    sSec.appendChild(rows);
+    container.appendChild(sSec);
+
+    /* ── RED FLAGS ── */
+    var rf = data.red_flags || {};
+    var total = ((rf.minor||[]).length + (rf.caution||[]).length + (rf.critical||[]).length);
+    var fSec = mkSec('Red Flags', total + ' flag' + (total !== 1 ? 's' : ''));
+    var col = document.createElement('div');
+    col.className = 'flags-col';
+    [
+      { key: 'minor',    cls: 'minor',    label: 'Minor' },
+      { key: 'caution',  cls: 'caution',  label: 'Cautious' },
+      { key: 'critical', cls: 'critical', label: 'Critical' }
+    ].forEach(function(tier) {
+      var items = rf[tier.key] || [];
+      var group = document.createElement('div');
+      group.className = 'flag-group ' + tier.cls;
+      var hdr = document.createElement('div');
+      hdr.className = 'flag-group-hdr';
+      hdr.innerHTML =
+        '<span class="flag-dot"></span>' +
+        '<span class="flag-group-name">' + tier.label + '</span>' +
+        '<span class="flag-count">' + items.length + '</span>';
+      group.appendChild(hdr);
+
+      if (!items.length) {
+        var none = document.createElement('p');
+        none.className = 'no-flags';
+        none.textContent = 'No ' + tier.label.toLowerCase() + ' flags found.';
+        group.appendChild(none);
+      } else {
+        var itemsEl = document.createElement('div');
+        itemsEl.className = 'flag-items';
+        items.forEach(function(f) {
+          var fi = document.createElement('div');
+          fi.className = 'flag-item';
+          fi.innerHTML =
+            '<div class="flag-sec-name">' + (f.section || '') + '</div>' +
+            '<div class="flag-issue">' + (f.issue || '') + '</div>';
+          itemsEl.appendChild(fi);
+        });
+        group.appendChild(itemsEl);
+      }
+      col.appendChild(group);
+    });
+    fSec.appendChild(col);
+    container.appendChild(fSec);
+
+    /* ── SUMMARY ── */
+    var sumSec = mkSec('Summary', null);
+    var sumBox = document.createElement('div');
+    sumBox.className = 'summary-box';
+    sumBox.textContent = data.summary || '';
+    sumSec.appendChild(sumBox);
+    container.appendChild(sumSec);
+  }
+
+  function mkSec(label, badge) {
+    var sec = document.createElement('div');
+    sec.className = 'result-section';
+    var hdr = document.createElement('div');
+    hdr.className = 'result-section-hdr';
+    hdr.textContent = label;
+    if (badge) {
+      var b = document.createElement('span');
+      b.className = 'section-badge';
+      b.textContent = badge;
+      hdr.appendChild(b);
+    }
+    sec.appendChild(hdr);
+    return sec;
+  }
+
+  /* ── Submit ──────────────────────────────────────────────────── */
+  document.getElementById('upload-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!fileInput.files.length) { alert('Please choose a file.'); return; }
+
+    var fileName = fileInput.files[0].name;
+    var fd = new FormData();
+    fd.append('file', fileInput.files[0]);
+
+    submitBtn.disabled = true;
+    statusEl.textContent = 'Uploading and analyzing… this may take a minute.';
+    statusEl.className = 'status-bar';
+    loadingBar.classList.add('active');
+
+    fetch('/api/analyze-iep', { method: 'POST', body: fd })
+      .then(function(res) { return res.json().then(function(j) { return { ok: res.ok, data: j }; }); })
+      .then(function(r) {
+        submitBtn.disabled = false;
+        loadingBar.classList.remove('active');
+        if (!r.ok || r.data.error) {
+          statusEl.textContent = 'Error: ' + (r.data.error || r.data.detail || 'Request failed');
+          statusEl.className = 'status-bar error';
+          return;
+        }
+        document.getElementById('results-file').textContent = fileName;
+        renderResult(r.data, fileName);
+        document.getElementById('upload-state').style.display = 'none';
+        document.getElementById('results-state').classList.add('visible');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      })
+      .catch(function(err) {
+        submitBtn.disabled = false;
+        loadingBar.classList.remove('active');
+        statusEl.textContent = 'Request failed: ' + err;
+        statusEl.className = 'status-bar error';
+      });
+  });
+</script>
+</body>
+</html>

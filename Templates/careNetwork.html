@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CarePath — Learning Support Network</title>
+  <style>
+    /* ── Tokens ──────────────────────────────────────────────────── */
+    :root {
+      --bg: #F8F5EF; --surface: #FFFFFF; --border: #E5E7EB;
+      --primary: #0B2D5C; --primary-dark: #071E3E;
+      --accent: #F3D26A; --accent-pale: #FEF9EC;
+      --text: #0F172A; --muted: #64748B; --light-blue: #89B4D8;
+      --sidebar-w: 200px; --radius: 10px;
+      /* Recommendation tier colors */
+      --tier-primary:   #16A34A;
+      --tier-secondary: #D97706;
+      --tier-tertiary:  #DC2626;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           font-size: 16px; line-height: 1.6; color: var(--text); background: var(--bg); }
+    a { text-decoration: none; }
+
+    .app-shell { display: flex; min-height: 100vh; }
+
+    /* ── Sidebar ─────────────────────────────────────────────────── */
+    .sidebar {
+      position: fixed; top: 0; left: 0;
+      width: var(--sidebar-w); height: 100vh;
+      background: var(--primary);
+      display: flex; flex-direction: column;
+      z-index: 200; overflow-y: auto;
+    }
+    .sidebar-logo {
+      padding: 28px 20px 22px; display: flex; align-items: center; gap: 11px;
+      border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0;
+    }
+    .logo-mark {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--accent); color: var(--primary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.88rem; font-weight: 800; flex-shrink: 0;
+    }
+    .sidebar-logo span { color: #fff; font-weight: 700; font-size: 1rem; }
+    .sidebar-nav { padding: 10px 0; flex: 1; }
+    .sidebar-nav a {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 20px; font-size: 0.875rem; font-weight: 500;
+      color: rgba(255,255,255,0.58); border-left: 3px solid transparent;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .sidebar-nav a:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.88); }
+    .sidebar-nav a.active { background: rgba(243,210,106,0.12); color: #fff; border-left-color: var(--accent); font-weight: 600; }
+    .nav-icon { font-size: 1rem; opacity: 0.7; flex-shrink: 0; }
+    .sidebar-nav a.active .nav-icon { opacity: 1; }
+
+    .main-content { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; }
+    .page-container { max-width: 820px; margin: 0 auto; padding: 52px 40px 80px; }
+
+    /* ── Page header ─────────────────────────────────────────────── */
+    .page-header { margin-bottom: 36px; }
+    .page-header h1 {
+      font-size: 2rem; font-weight: 800; color: var(--primary);
+      letter-spacing: -0.02em; margin-bottom: 8px;
+    }
+    .page-header p { font-size: 0.975rem; color: var(--muted); max-width: 500px; }
+
+    /* ── Form card ───────────────────────────────────────────────── */
+    .form-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 32px 28px; margin-bottom: 0;
+    }
+    .form-section { margin-bottom: 26px; }
+    .form-label {
+      font-size: 0.76rem; font-weight: 700; letter-spacing: 0.09em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 12px;
+      display: block;
+    }
+
+    /* ── Chips ───────────────────────────────────────────────────── */
+    .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      padding: 8px 18px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: var(--bg);
+      font-size: 0.875rem; font-weight: 500; cursor: pointer;
+      color: var(--muted); transition: all 0.15s; user-select: none;
+      font-family: inherit;
+    }
+    .chip:hover { border-color: var(--light-blue); color: var(--primary); }
+    .chip.selected {
+      background: var(--primary); color: #fff;
+      border-color: var(--primary); font-weight: 600;
+    }
+
+    /* ── Location input ──────────────────────────────────────────── */
+    .location-input {
+      width: 100%; padding: 11px 14px;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 0.95rem; font-family: inherit; color: var(--text);
+      background: var(--bg); outline: none; transition: border-color 0.15s;
+    }
+    .location-input:focus { border-color: var(--light-blue); background: var(--surface); }
+    .location-input::placeholder { color: #94A3B8; }
+
+    /* ── Submit ──────────────────────────────────────────────────── */
+    .submit-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 11px 26px; background: var(--primary); color: #fff;
+      border: none; border-radius: 8px; font-size: 0.925rem;
+      font-weight: 600; font-family: inherit; cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .submit-btn:hover { background: #08244A; }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Loading bar ─────────────────────────────────────────────── */
+    .loading-bar {
+      display: none; height: 3px; background: var(--border);
+      border-radius: 2px; margin-top: 20px; overflow: hidden;
+    }
+    .loading-bar.active { display: block; }
+    .loading-bar::after {
+      content: ''; display: block; height: 100%; width: 40%;
+      background: var(--accent); border-radius: 2px;
+      animation: sweep 1.4s ease-in-out infinite;
+    }
+    @keyframes sweep { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+
+    /* ── RESULTS STATE ───────────────────────────────────────────── */
+    #results-state { display: none; }
+    #results-state.visible { display: block; }
+
+    /* Results hero */
+    .results-hero {
+      background: var(--primary); border-radius: var(--radius);
+      padding: 30px 28px 26px; margin-bottom: 32px;
+    }
+    .results-hero h1 {
+      font-size: 1.55rem; font-weight: 800; color: #fff;
+      margin-bottom: 4px; letter-spacing: -0.01em;
+    }
+    .results-hero .results-sub {
+      font-size: 0.9rem; color: rgba(255,255,255,0.7); margin-bottom: 16px;
+    }
+    .results-hero .results-sub strong { color: #fff; }
+    .selected-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+    .selected-tag {
+      padding: 4px 14px; background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.28); border-radius: 20px;
+      font-size: 0.8rem; font-weight: 600; color: #fff; text-transform: capitalize;
+    }
+    .new-search-btn {
+      display: inline-flex; align-items: center; gap: 6px; margin-top: 18px;
+      padding: 7px 16px; background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.3); border-radius: 6px;
+      font-size: 0.84rem; font-weight: 600; color: #fff;
+      cursor: pointer; font-family: inherit; transition: background 0.15s;
+    }
+    .new-search-btn:hover { background: rgba(255,255,255,0.2); }
+
+    /* ── Condition block ─────────────────────────────────────────── */
+    .condition-block { margin-bottom: 48px; }
+    .condition-overview {
+      font-size: 0.94rem; color: var(--muted); line-height: 1.75;
+      margin-bottom: 28px; max-width: 660px;
+    }
+
+    /* ── Section block ───────────────────────────────────────────── */
+    .section-block { margin-bottom: 30px; }
+    .section-block-label {
+      font-size: 0.73rem; font-weight: 700; letter-spacing: 0.09em;
+      text-transform: uppercase; color: var(--muted);
+      display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+    }
+    .section-block-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* ── Option cards ────────────────────────────────────────────── */
+    .options-list { display: flex; flex-direction: column; gap: 12px; }
+    .option-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px 18px 16px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .option-card:hover { border-color: var(--light-blue); box-shadow: 0 2px 10px rgba(11,45,92,0.07); }
+    .option-num {
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--accent);
+      background: var(--primary); padding: 2px 8px; border-radius: 4px;
+      margin-bottom: 8px; display: inline-block;
+    }
+    .option-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 10px; }
+    .option-title a { color: var(--primary); }
+    .option-title a:hover { text-decoration: underline; }
+    .meta-row { display: flex; gap: 8px; font-size: 0.86rem; line-height: 1.5; margin-bottom: 6px; }
+    .meta-label {
+      font-weight: 700; color: var(--primary); background: var(--accent-pale);
+      padding: 1px 8px; border-radius: 4px; white-space: nowrap; align-self: flex-start;
+    }
+    .meta-text { color: #334155; }
+
+    /* ── Key differences ─────────────────────────────────────────── */
+    .insight-text {
+      font-size: 0.935rem; color: #334155; line-height: 1.75;
+      padding: 16px 18px; background: var(--surface);
+      border-left: 3px solid var(--accent); border-radius: 0 var(--radius) var(--radius) 0;
+    }
+
+    /* ── Recommendation tiers ────────────────────────────────────── */
+    .rec-list { display: flex; flex-direction: column; gap: 10px; }
+    .rec-block {
+      display: flex; gap: 0; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .rec-bar { width: 5px; flex-shrink: 0; }
+    .rec-bar.primary   { background: var(--tier-primary); }
+    .rec-bar.secondary { background: var(--tier-secondary); }
+    .rec-bar.tertiary  { background: var(--tier-tertiary); }
+    .rec-body { padding: 14px 16px; }
+    .rec-tier-label {
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.07em;
+      text-transform: uppercase; margin-bottom: 3px;
+    }
+    .rec-bar.primary   ~ .rec-body .rec-tier-label { color: var(--tier-primary); }
+    .rec-bar.secondary ~ .rec-body .rec-tier-label { color: var(--tier-secondary); }
+    .rec-bar.tertiary  ~ .rec-body .rec-tier-label { color: var(--tier-tertiary); }
+    .rec-text { font-size: 0.9rem; color: #334155; line-height: 1.65; }
+
+    /* ── Fallback source list ─────────────────────────────────────── */
+    .source-list { list-style: none; padding: 0; }
+    .source-list li { margin-bottom: 7px; }
+    .source-list a { font-size: 0.88rem; color: var(--primary); }
+    .source-list a:hover { text-decoration: underline; }
+
+    .condition-divider { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+    .condition-title {
+      font-size: 1.35rem; font-weight: 800; color: var(--primary);
+      text-transform: capitalize; margin-bottom: 20px;
+      padding-bottom: 12px; border-bottom: 2px solid var(--accent);
+      letter-spacing: -0.01em;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { width: 100%; height: 56px; flex-direction: row; align-items: center; position: fixed; top: 0; overflow-x: auto; overflow-y: hidden; }
+      .sidebar-logo { padding: 0 16px; border-bottom: none; border-right: 1px solid rgba(255,255,255,0.15); }
+      .sidebar-nav { display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
+      .sidebar-nav a { padding: 0 14px; height: 56px; border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; }
+      .sidebar-nav a.active { border-bottom-color: var(--accent); border-left-color: transparent; }
+      .main-content { margin-left: 0; margin-top: 56px; }
+      .page-container { padding: 32px 20px 60px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">C</div>
+      <span>CarePath</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/"><span class="nav-icon">⊙</span> Disabilities</a>
+      <a href="/carenetwork" class="active"><span class="nav-icon">◎</span> Learning Support</a>
+      <a href="/docbreakdown"><span class="nav-icon">▣</span> Medical Breakdown</a>
+      <a href="/iep"><span class="nav-icon">◈</span> IEP Analysis</a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-container">
+
+      <!-- ── FORM STATE ─────────────────────────────────────────── -->
+      <div id="form-state">
+        <header class="page-header">
+          <h1>Learning Support Network</h1>
+          <p>Select a learning difference and enter your location — both are required.</p>
+        </header>
+
+        <div class="form-card">
+          <div class="form-section">
+            <span class="form-label">Learning Difference</span>
+            <div class="chip-row" id="symptom-buttons">
+              <button type="button" class="chip" data-symptom="add_adhd">ADD / ADHD</button>
+              <button type="button" class="chip" data-symptom="dyslexia">Dyslexia</button>
+              <button type="button" class="chip" data-symptom="dyscalculia">Dyscalculia</button>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <span class="form-label">Your Location</span>
+            <input class="location-input" id="custom-input" type="text" placeholder="e.g. Boston, Massachusetts" />
+          </div>
+
+          <button class="submit-btn" id="submit-btn" type="button">Find Support →</button>
+          <div class="loading-bar" id="loading-bar"></div>
+        </div>
+      </div>
+
+      <!-- ── RESULTS STATE ──────────────────────────────────────── -->
+      <div id="results-state">
+        <div class="results-hero">
+          <h1>Learning Support Network</h1>
+          <p class="results-sub">Support options in <strong id="results-location-text"></strong></p>
+          <div class="selected-tags" id="results-tags"></div>
+          <button class="new-search-btn" id="new-search-btn">← New Search</button>
+        </div>
+        <div id="results-content"></div>
+      </div>
+
+    </div>
+  </main>
+
+</div>
+<script>
+  var selectedSymptoms = [];
+
+  document.querySelectorAll('#symptom-buttons .chip').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var symptom = btn.getAttribute('data-symptom');
+      var idx = selectedSymptoms.indexOf(symptom);
+      if (idx === -1) { selectedSymptoms.push(symptom); btn.classList.add('selected'); }
+      else { selectedSymptoms.splice(idx, 1); btn.classList.remove('selected'); }
+    });
+  });
+
+  document.getElementById('new-search-btn').addEventListener('click', function() {
+    document.getElementById('results-state').classList.remove('visible');
+    document.getElementById('form-state').style.display = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  var submitBtn = document.getElementById('submit-btn');
+  var loadingBar = document.getElementById('loading-bar');
+
+  submitBtn.addEventListener('click', function() {
+    var location = document.getElementById('custom-input').value.trim();
+    if (!selectedSymptoms.length) { alert('Please select at least one learning difference.'); return; }
+    if (!location) { alert('Please enter a location.'); return; }
+    if (location.length < 3) { alert('Please enter a more specific location (city and state).'); return; }
+
+    submitBtn.disabled = true;
+    loadingBar.classList.add('active');
+
+    fetch('/api/makeNetwork', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conditions: selectedSymptoms, location: location })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      submitBtn.disabled = false;
+      loadingBar.classList.remove('active');
+      if (data.error) { alert(data.error); return; }
+      showResults(data, location, selectedSymptoms.slice());
+    })
+    .catch(function(err) {
+      submitBtn.disabled = false;
+      loadingBar.classList.remove('active');
+      alert('Request failed: ' + err);
+    });
+  });
+
+  function showResults(data, location, conditions) {
+    document.getElementById('results-location-text').textContent = location;
+    var tagsEl = document.getElementById('results-tags');
+    tagsEl.innerHTML = '';
+    conditions.forEach(function(c) {
+      var tag = document.createElement('span');
+      tag.className = 'selected-tag';
+      tag.textContent = c.replace(/_/g, ' ');
+      tagsEl.appendChild(tag);
+    });
+
+    var container = document.getElementById('results-content');
+    container.innerHTML = '';
+    var first = true;
+
+    for (var condition in data) {
+      if (!first) { var hr = document.createElement('hr'); hr.className = 'condition-divider'; container.appendChild(hr); }
+      first = false;
+      var condData = data[condition];
+      var block = document.createElement('div');
+      block.className = 'condition-block';
+
+      var condTitle = document.createElement('h2');
+      condTitle.className = 'condition-title';
+      condTitle.textContent = condition.replace(/_/g, ' ');
+      block.appendChild(condTitle);
+
+      if (condData.structured) { renderStructured(condData, block); }
+      else if (condData.comparison) { renderPlaintext(condData, block); }
+      container.appendChild(block);
+    }
+
+    document.getElementById('form-state').style.display = 'none';
+    document.getElementById('results-state').classList.add('visible');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function renderStructured(condData, container) {
+    var s = condData.structured;
+
+    /* Overview */
+    var ov = document.createElement('p');
+    ov.className = 'condition-overview';
+    ov.textContent = s.short_overview;
+    container.appendChild(ov);
+
+    /* Support Options */
+    var optSec = mkSection('Support Options');
+    var optList = document.createElement('div');
+    optList.className = 'options-list';
+    (s.options || []).forEach(function(opt, i) {
+      var idx = typeof opt.result_index === 'number' ? opt.result_index : 0;
+      var row = condData.results[idx];
+      var url = row && row.url ? row.url : '#';
+      var card = document.createElement('div');
+      card.className = 'option-card';
+      var titleHTML = '<div class="option-num">Option ' + (i + 1) + '</div>' +
+        '<div class="option-title"><a href="' + url + '" target="_blank" rel="noopener noreferrer">' +
+        (opt.display_name || (row && row.title) || 'Resource') + '</a></div>';
+      var metaHTML = '';
+      if (opt.best_for)      metaHTML += '<div class="meta-row"><span class="meta-label">Best for</span><span class="meta-text">' + opt.best_for + '</span></div>';
+      if (opt.considerations) metaHTML += '<div class="meta-row"><span class="meta-label">Note</span><span class="meta-text">' + opt.considerations + '</span></div>';
+      card.innerHTML = titleHTML + metaHTML;
+      optList.appendChild(card);
+    });
+    optSec.appendChild(optList);
+    container.appendChild(optSec);
+
+    /* Key Differences */
+    if (s.key_differences) {
+      var kdSec = mkSection('Key Differences');
+      var kdText = document.createElement('div');
+      kdText.className = 'insight-text';
+      kdText.textContent = s.key_differences;
+      kdSec.appendChild(kdText);
+      container.appendChild(kdSec);
+    }
+
+    /* General Recommendations → Primary / Secondary / Tertiary */
+    if (s.general_recommendation) {
+      var recSec = mkSection('General Recommendations');
+      var recList = document.createElement('div');
+      recList.className = 'rec-list';
+
+      var tiers = ['primary', 'secondary', 'tertiary'];
+      var tierLabels = ['Primary', 'Secondary', 'Tertiary'];
+      /* Split the recommendation text into up to 3 tier blocks */
+      var sentences = s.general_recommendation
+        .replace(/\.\s+/g, '.|').split('|')
+        .map(function(s) { return s.trim(); })
+        .filter(function(s) { return s.length > 0; });
+      var count = Math.min(sentences.length, 3);
+
+      for (var t = 0; t < count; t++) {
+        var text = t === count - 1 ? sentences.slice(t).join(' ') : sentences[t];
+        var rb = document.createElement('div');
+        rb.className = 'rec-block';
+        rb.innerHTML =
+          '<div class="rec-bar ' + tiers[t] + '"></div>' +
+          '<div class="rec-body">' +
+            '<div class="rec-tier-label">' + tierLabels[t] + '</div>' +
+            '<div class="rec-text">' + text + '</div>' +
+          '</div>';
+        recList.appendChild(rb);
+      }
+      recSec.appendChild(recList);
+      container.appendChild(recSec);
+    }
+  }
+
+  function renderPlaintext(condData, container) {
+    var lines = condData.comparison.split('\n');
+    lines.forEach(function(line) {
+      var clean = line.replace(/\*/g, '').trim();
+      if (!clean) return;
+      if (/^\d+\./.test(clean)) {
+        var h = document.createElement('h3');
+        h.style.cssText = 'margin:20px 0 6px;font-size:0.95rem;color:var(--primary);';
+        h.textContent = clean; container.appendChild(h);
+      } else {
+        var p = document.createElement('p');
+        p.style.cssText = 'margin:4px 0;font-size:0.9rem;color:#334155;line-height:1.7;';
+        p.textContent = clean; container.appendChild(p);
+      }
+    });
+    if (condData.results && condData.results.length) {
+      var srcSec = mkSection('Sources');
+      var ul = document.createElement('ul'); ul.className = 'source-list';
+      condData.results.forEach(function(r) {
+        var li = document.createElement('li');
+        li.innerHTML = '<a href="' + r.url + '" target="_blank" rel="noopener noreferrer">' + r.title + '</a>';
+        ul.appendChild(li);
+      });
+      srcSec.appendChild(ul); container.appendChild(srcSec);
+    }
+  }
+
+  function mkSection(label) {
+    var sec = document.createElement('div');
+    sec.className = 'section-block';
+    var lbl = document.createElement('p');
+    lbl.className = 'section-block-label';
+    lbl.textContent = label;
+    sec.appendChild(lbl);
+    return sec;
+  }
+</script>
+</body>
+</html>

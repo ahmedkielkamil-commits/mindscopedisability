@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CarePath — Medical Breakdown</title>
+  <style>
+    /* ── Tokens ──────────────────────────────────────────────────── */
+    :root {
+      --bg: #F8F5EF; --surface: #FFFFFF; --border: #E5E7EB;
+      --primary: #0B2D5C; --accent: #F3D26A; --accent-pale: #FEF9EC;
+      --text: #0F172A; --muted: #64748B; --light-blue: #89B4D8;
+      --sidebar-w: 200px; --radius: 10px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           font-size: 16px; line-height: 1.6; color: var(--text); background: var(--bg); }
+    a { text-decoration: none; }
+
+    .app-shell { display: flex; min-height: 100vh; }
+
+    /* ── Sidebar ─────────────────────────────────────────────────── */
+    .sidebar {
+      position: fixed; top: 0; left: 0;
+      width: var(--sidebar-w); height: 100vh;
+      background: var(--primary);
+      display: flex; flex-direction: column;
+      z-index: 200; overflow-y: auto;
+    }
+    .sidebar-logo {
+      padding: 28px 20px 22px; display: flex; align-items: center; gap: 11px;
+      border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0;
+    }
+    .logo-mark {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--accent); color: var(--primary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.88rem; font-weight: 800; flex-shrink: 0;
+    }
+    .sidebar-logo span { color: #fff; font-weight: 700; font-size: 1rem; }
+    .sidebar-nav { padding: 10px 0; flex: 1; }
+    .sidebar-nav a {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 20px; font-size: 0.875rem; font-weight: 500;
+      color: rgba(255,255,255,0.58); border-left: 3px solid transparent;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .sidebar-nav a:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.88); }
+    .sidebar-nav a.active { background: rgba(243,210,106,0.12); color: #fff; border-left-color: var(--accent); font-weight: 600; }
+    .nav-icon { font-size: 1rem; opacity: 0.7; flex-shrink: 0; }
+    .sidebar-nav a.active .nav-icon { opacity: 1; }
+
+    .main-content { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; }
+    .page-container { max-width: 900px; margin: 0 auto; padding: 52px 40px 80px; }
+
+    /* ── Page header ─────────────────────────────────────────────── */
+    .page-header { margin-bottom: 36px; }
+    .page-header h1 {
+      font-size: 2rem; font-weight: 800; color: var(--primary);
+      letter-spacing: -0.02em; margin-bottom: 8px;
+    }
+    .page-header p { font-size: 0.975rem; color: var(--muted); max-width: 500px; }
+
+    /* ── Upload card ─────────────────────────────────────────────── */
+    .form-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 32px 28px; margin-bottom: 24px;
+    }
+    .upload-zone {
+      border: 2px dashed var(--border); border-radius: 8px;
+      padding: 52px 24px; text-align: center;
+      background: var(--bg); margin-bottom: 22px; transition: border-color 0.15s;
+    }
+    .upload-zone.drag-over { border-color: var(--light-blue); background: #EEF5FF; }
+    .upload-zone p { font-size: 0.95rem; color: var(--muted); margin-bottom: 14px; }
+    .upload-zone input[type="file"] { display: none; }
+    .upload-label {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 20px; background: var(--surface);
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 0.875rem; font-weight: 600; color: var(--primary);
+      cursor: pointer; transition: border-color 0.15s, background 0.15s;
+    }
+    .upload-label:hover { border-color: var(--primary); background: var(--accent-pale); }
+    #file-name-display { font-size: 0.84rem; color: var(--muted); margin-top: 10px; min-height: 20px; }
+    .accept-hint { font-size: 0.78rem; color: #94A3B8; margin-top: 4px; }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 11px 24px; background: var(--primary); color: #fff;
+      border: none; border-radius: 8px; font-size: 0.9rem;
+      font-weight: 600; font-family: inherit; cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .btn-primary:hover { background: #08244A; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 11px 22px; background: var(--surface);
+      border: 1.5px solid var(--primary); border-radius: 8px;
+      font-size: 0.9rem; font-weight: 600; color: var(--primary);
+      font-family: inherit; cursor: pointer; transition: background 0.15s;
+    }
+    .btn-secondary:hover { background: var(--accent-pale); }
+
+    .btn-accent {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 11px 22px; background: var(--accent); color: var(--primary);
+      border: none; border-radius: 8px; font-size: 0.9rem;
+      font-weight: 700; font-family: inherit; cursor: pointer;
+      text-decoration: none; transition: filter 0.15s;
+    }
+    .btn-accent:hover { filter: brightness(0.93); }
+    .btn-accent.hidden { display: none; }
+
+    /* ── Loading / status ────────────────────────────────────────── */
+    .loading-bar {
+      display: none; height: 3px; background: var(--border);
+      border-radius: 2px; margin-top: 18px; overflow: hidden;
+    }
+    .loading-bar.active { display: block; }
+    .loading-bar::after {
+      content: ''; display: block; height: 100%; width: 40%;
+      background: var(--accent); border-radius: 2px;
+      animation: sweep 1.4s ease-in-out infinite;
+    }
+    @keyframes sweep { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+    .status-bar { font-size: 0.88rem; color: var(--muted); min-height: 22px; margin-top: 14px; }
+    .status-bar.error { color: #DC2626; }
+
+    /* ── RESULTS STATE ───────────────────────────────────────────── */
+    #results-state { display: none; }
+    #results-state.visible { display: block; }
+
+    /* Results header */
+    .results-header { margin-bottom: 28px; }
+    .results-header h1 {
+      font-size: 1.8rem; font-weight: 800; color: var(--primary);
+      letter-spacing: -0.02em; margin-bottom: 6px;
+    }
+    .results-header .results-meta { font-size: 0.875rem; color: var(--muted); }
+
+    /* Action row: Choose New File | Generate | Download */
+    .results-actions {
+      display: flex; align-items: center; gap: 10px;
+      flex-wrap: wrap; margin-bottom: 32px;
+    }
+
+    /* ── SLIDESHOW ───────────────────────────────────────────────── */
+    .slideshow-section { }
+
+    /* Controls row */
+    .slideshow-controls {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+    }
+    .slide-arrow {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--surface); border: 1.5px solid var(--border);
+      font-size: 1.15rem; color: var(--primary); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: background 0.15s, border-color 0.15s;
+      font-family: inherit;
+    }
+    .slide-arrow:hover:not(:disabled) { background: var(--accent-pale); border-color: var(--accent); }
+    .slide-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .slide-info-center { flex: 1; }
+    .slide-current-label {
+      font-size: 0.95rem; font-weight: 700; color: var(--primary); display: block;
+    }
+    .slide-counter-text { font-size: 0.82rem; color: var(--muted); }
+
+    /* Outer: clips the track so only current + peek are visible */
+    .slideshow-outer {
+      overflow: hidden; border-radius: var(--radius);
+      position: relative; width: 100%;
+    }
+
+    /* Track: flex row of slides, animated on translateX */
+    .slide-track {
+      display: flex; gap: 14px;
+      transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+      will-change: transform;
+    }
+
+    /* Each slide item: 80% of outer width → ~20% peek for next */
+    .slide-item {
+      flex: 0 0 80%;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      overflow: hidden;
+      /* Subtle opacity on non-current slides */
+      opacity: 0.55;
+      transition: opacity 0.32s;
+    }
+    .slide-item.current { opacity: 1; }
+
+    /* iframe scaled to fit */
+    .slide-frame-wrapper {
+      width: 100%; overflow: hidden; position: relative;
+    }
+    .slide-frame-wrapper iframe {
+      position: absolute; top: 0; left: 0;
+      width: 1280px; height: 720px;
+      border: none; transform-origin: top left;
+    }
+
+    /* Slide label under the viewer */
+    .slide-caption {
+      margin-top: 12px; display: flex; align-items: center; gap: 14px;
+    }
+    .slide-caption-title {
+      font-size: 0.9rem; font-weight: 600; color: var(--primary); flex: 1;
+      text-transform: capitalize;
+    }
+    .slide-dots { display: flex; gap: 6px; align-items: center; }
+    .slide-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--border); transition: background 0.2s, transform 0.2s;
+      cursor: pointer; border: none; padding: 0;
+    }
+    .slide-dot.active { background: var(--primary); transform: scale(1.35); }
+
+    /* PDF-not-ready notice */
+    .pdf-warn { font-size: 0.82rem; color: var(--muted); font-style: italic; }
+
+    @media (max-width: 768px) {
+      .sidebar { width: 100%; height: 56px; flex-direction: row; align-items: center; position: fixed; top: 0; overflow-x: auto; overflow-y: hidden; }
+      .sidebar-logo { padding: 0 16px; border-bottom: none; border-right: 1px solid rgba(255,255,255,0.15); }
+      .sidebar-nav { display: flex; flex-direction: row; padding: 0; overflow-x: auto; }
+      .sidebar-nav a { padding: 0 14px; height: 56px; border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; }
+      .sidebar-nav a.active { border-bottom-color: var(--accent); border-left-color: transparent; }
+      .main-content { margin-left: 0; margin-top: 56px; }
+      .page-container { padding: 32px 20px 60px; }
+      .slide-item { flex: 0 0 88%; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">C</div>
+      <span>CarePath</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/"><span class="nav-icon">⊙</span> Disabilities</a>
+      <a href="/carenetwork"><span class="nav-icon">◎</span> Learning Support</a>
+      <a href="/docbreakdown" class="active"><span class="nav-icon">▣</span> Medical Breakdown</a>
+      <a href="/iep"><span class="nav-icon">◈</span> IEP Analysis</a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-container">
+
+      <!-- ── UPLOAD STATE ───────────────────────────────────────── -->
+      <div id="upload-state">
+        <header class="page-header">
+          <h1>Medical Breakdown Generator</h1>
+          <p>Upload one or more medical research PDFs. The AI will generate a visual, slide-style breakdown you can review and download.</p>
+        </header>
+
+        <div class="form-card">
+          <form id="upload-form">
+            <div class="upload-zone" id="upload-zone">
+              <p>Drag &amp; drop PDFs here, or click to browse</p>
+              <label class="upload-label" for="pdf-input">Choose PDFs</label>
+              <input type="file" id="pdf-input" name="pdfs" accept=".pdf" multiple required>
+              <p id="file-name-display">No files selected</p>
+              <p class="accept-hint">Accepts: .pdf (multiple allowed)</p>
+            </div>
+            <button class="btn-primary" type="submit" id="submit-btn">Generate Breakdown →</button>
+          </form>
+          <p class="status-bar" id="status"></p>
+          <div class="loading-bar" id="loading-bar"></div>
+        </div>
+      </div>
+
+      <!-- ── RESULTS STATE ──────────────────────────────────────── -->
+      <div id="results-state">
+        <div class="results-header">
+          <h1>Medical Breakdown</h1>
+          <p class="results-meta" id="results-meta">Generated from your uploaded PDFs</p>
+        </div>
+
+        <!-- Action row -->
+        <div class="results-actions">
+          <button class="btn-secondary" id="new-file-btn">Choose New File</button>
+          <button class="btn-primary" id="regen-btn">Generate Breakdown →</button>
+          <a class="btn-accent hidden" id="download-btn" href="/api/download-breakdown" download="medical_breakdown.pdf">Download as PDF ↓</a>
+          <span class="pdf-warn hidden" id="pdf-warn"></span>
+        </div>
+
+        <!-- Slideshow controls -->
+        <div class="slideshow-section">
+          <div class="slideshow-controls">
+            <button class="slide-arrow" id="prev-btn" disabled>&#8249;</button>
+            <div class="slide-info-center">
+              <span class="slide-current-label" id="slide-current-label">Slide 1</span>
+              <span class="slide-counter-text" id="slide-counter"></span>
+            </div>
+            <button class="slide-arrow" id="next-btn" disabled>&#8250;</button>
+          </div>
+
+          <!-- The outer clips the track -->
+          <div class="slideshow-outer" id="slideshow-outer">
+            <div class="slide-track" id="slide-track"></div>
+          </div>
+
+          <!-- Caption + dots below viewer -->
+          <div class="slide-caption">
+            <span class="slide-caption-title" id="slide-caption-title"></span>
+            <div class="slide-dots" id="slide-dots"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+</div>
+<script>
+  /* ── File input handling ─────────────────────────────────────── */
+  var fileInput   = document.getElementById('pdf-input');
+  var submitBtn   = document.getElementById('submit-btn');
+  var loadingBar  = document.getElementById('loading-bar');
+  var statusEl    = document.getElementById('status');
+
+  fileInput.addEventListener('change', function() {
+    var names = Array.from(fileInput.files).map(function(f) { return f.name; });
+    document.getElementById('file-name-display').textContent = names.length ? names.join(', ') : 'No files selected';
+  });
+
+  /* Drag-and-drop */
+  var zone = document.getElementById('upload-zone');
+  zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', function() { zone.classList.remove('drag-over'); });
+  zone.addEventListener('drop', function(e) {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    if (e.dataTransfer.files.length) {
+      fileInput.files = e.dataTransfer.files;
+      var names = Array.from(e.dataTransfer.files).map(function(f) { return f.name; });
+      document.getElementById('file-name-display').textContent = names.join(', ');
+    }
+  });
+
+  /* ── Slideshow state ─────────────────────────────────────────── */
+  var slides = [];        /* [{html, title}] */
+  var currentIndex = 0;
+  var GAP = 14;           /* matches CSS gap */
+
+  /* Compute the pixel width of a slide-item (80% of outer) */
+  function slideItemWidth() {
+    var outer = document.getElementById('slideshow-outer');
+    return outer ? outer.offsetWidth * 0.80 : 600;
+  }
+
+  /* Scale all iframes to fit their wrapper */
+  function scaleIframe(wrapper, iframe) {
+    var w = wrapper.offsetWidth;
+    if (!w) return;
+    var scale = w / 1280;
+    iframe.style.transform = 'scale(' + scale + ')';
+    wrapper.style.height = (720 * scale) + 'px';
+  }
+  function scaleAllIframes() {
+    document.querySelectorAll('.slide-frame-wrapper').forEach(function(wrapper) {
+      var iframe = wrapper.querySelector('iframe');
+      if (iframe) scaleIframe(wrapper, iframe);
+    });
+  }
+
+  /* Navigate to a specific slide index */
+  function goToSlide(index) {
+    if (index < 0 || index >= slides.length) return;
+    currentIndex = index;
+
+    var offset = currentIndex * (slideItemWidth() + GAP);
+    document.getElementById('slide-track').style.transform = 'translateX(-' + offset + 'px)';
+
+    /* Update labels */
+    document.getElementById('slide-current-label').textContent = 'Slide ' + (currentIndex + 1);
+    document.getElementById('slide-counter').textContent = (currentIndex + 1) + ' of ' + slides.length;
+    document.getElementById('slide-caption-title').textContent =
+      (slides[currentIndex].title || '').replace(/_/g, ' ');
+
+    /* Arrow states */
+    document.getElementById('prev-btn').disabled = currentIndex === 0;
+    document.getElementById('next-btn').disabled = currentIndex === slides.length - 1;
+
+    /* Highlight current slide item + active dot */
+    document.querySelectorAll('.slide-item').forEach(function(el, i) {
+      el.classList.toggle('current', i === currentIndex);
+    });
+    document.querySelectorAll('.slide-dot').forEach(function(dot, i) {
+      dot.classList.toggle('active', i === currentIndex);
+    });
+  }
+
+  /* Build the slide track from API data */
+  function buildSlideshow(data) {
+    slides = (data.slides || []).map(function(html, i) {
+      return { html: html, title: (data.titles && data.titles[i]) ? data.titles[i] : 'Slide ' + (i + 1) };
+    });
+
+    var track = document.getElementById('slide-track');
+    track.innerHTML = '';
+    var dotsEl = document.getElementById('slide-dots');
+    dotsEl.innerHTML = '';
+
+    /* Temporarily disable transition while building */
+    track.style.transition = 'none';
+
+    slides.forEach(function(slide, i) {
+      /* Slide item */
+      var item = document.createElement('div');
+      item.className = 'slide-item' + (i === 0 ? ' current' : '');
+
+      var wrapper = document.createElement('div');
+      wrapper.className = 'slide-frame-wrapper';
+
+      var iframe = document.createElement('iframe');
+      iframe.srcdoc = slide.html;
+      iframe.setAttribute('loading', 'lazy');
+      iframe.addEventListener('load', function() { scaleIframe(wrapper, iframe); });
+      wrapper.appendChild(iframe);
+      item.appendChild(wrapper);
+      track.appendChild(item);
+
+      /* Dot */
+      var dot = document.createElement('button');
+      dot.className = 'slide-dot' + (i === 0 ? ' active' : '');
+      dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+      (function(idx) { dot.addEventListener('click', function() { goToSlide(idx); }); })(i);
+      dotsEl.appendChild(dot);
+    });
+
+    /* Restore transition after a tick */
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        track.style.transition = '';
+      });
+    });
+
+    /* Initial scale pass */
+    setTimeout(scaleAllIframes, 80);
+
+    goToSlide(0);
+  }
+
+  /* Arrow buttons */
+  document.getElementById('prev-btn').addEventListener('click', function() { goToSlide(currentIndex - 1); });
+  document.getElementById('next-btn').addEventListener('click', function() { goToSlide(currentIndex + 1); });
+
+  /* Keyboard navigation */
+  document.addEventListener('keydown', function(e) {
+    if (document.getElementById('results-state').classList.contains('visible')) {
+      if (e.key === 'ArrowRight') goToSlide(currentIndex + 1);
+      if (e.key === 'ArrowLeft')  goToSlide(currentIndex - 1);
+    }
+  });
+
+  /* Recalculate position + scales on resize */
+  window.addEventListener('resize', function() {
+    var track = document.getElementById('slide-track');
+    track.style.transition = 'none';
+    var offset = currentIndex * (slideItemWidth() + GAP);
+    track.style.transform = 'translateX(-' + offset + 'px)';
+    setTimeout(function() { track.style.transition = ''; }, 50);
+    scaleAllIframes();
+  });
+
+  /* ── "Choose New File" / "Regenerate" ────────────────────────── */
+  function resetToUpload() {
+    document.getElementById('results-state').classList.remove('visible');
+    document.getElementById('upload-state').style.display = '';
+    statusEl.textContent = '';
+    statusEl.className = 'status-bar';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  document.getElementById('new-file-btn').addEventListener('click', resetToUpload);
+  document.getElementById('regen-btn').addEventListener('click', function() {
+    if (!fileInput.files.length) { resetToUpload(); return; }
+    doGenerate(fileInput.files);
+  });
+
+  /* ── Submit form ─────────────────────────────────────────────── */
+  document.getElementById('upload-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!fileInput.files.length) { alert('Please select at least one PDF.'); return; }
+    doGenerate(fileInput.files);
+  });
+
+  function doGenerate(files) {
+    var formData = new FormData();
+    for (var i = 0; i < files.length; i++) { formData.append('pdfs', files[i]); }
+    var names = Array.from(files).map(function(f) { return f.name; }).join(', ');
+
+    submitBtn.disabled = true;
+    statusEl.textContent = 'Uploading and generating… this may take a minute.';
+    statusEl.className = 'status-bar';
+    loadingBar.classList.add('active');
+
+    fetch('/api/generate-breakdown', { method: 'POST', body: formData })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        submitBtn.disabled = false;
+        loadingBar.classList.remove('active');
+
+        if (data.error) {
+          statusEl.textContent = 'Error: ' + data.error;
+          statusEl.className = 'status-bar error';
+          return;
+        }
+
+        showResults(data, names);
+      })
+      .catch(function(err) {
+        submitBtn.disabled = false;
+        loadingBar.classList.remove('active');
+        statusEl.textContent = 'Request failed: ' + err;
+        statusEl.className = 'status-bar error';
+      });
+  }
+
+  function showResults(data, names) {
+    document.getElementById('results-meta').textContent = 'Generated from: ' + names;
+
+    var dlBtn  = document.getElementById('download-btn');
+    var pdfWarn = document.getElementById('pdf-warn');
+    if (data.pdf_ready) {
+      dlBtn.classList.remove('hidden');
+      pdfWarn.classList.add('hidden');
+    } else {
+      dlBtn.classList.add('hidden');
+      if (data.pdf_warning) {
+        pdfWarn.textContent = 'PDF render skipped: ' + data.pdf_warning;
+        pdfWarn.classList.remove('hidden');
+      }
+    }
+
+    buildSlideshow(data);
+
+    document.getElementById('upload-state').style.display = 'none';
+    document.getElementById('results-state').classList.add('visible');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>
