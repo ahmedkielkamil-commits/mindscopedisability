@@ -1,0 +1,74 @@
+{
+  "Dyslexia": {
+    "search_keywords": [
+      "dyslexia tutoring center",
+      "Orton-Gillingham reading tutor",
+      "structured literacy reading specialist",
+      "dyslexia testing and evaluation"
+    ]
+  },
+  "ADHD": {
+    "search_keywords": [
+      "ADHD coaching for students",
+      "ADHD executive function tutoring",
+      "child ADHD evaluation clinic",
+      "ADHD behavioral therapy for children"
+    ]
+  },
+  "Autism": {
+    "search_keywords": [
+      "autism learning center for children",
+      "ABA therapy provider",
+      "autism social skills program",
+      "autism special education support"
+    ]
+  },
+  "Anxiety": {
+    "search_keywords": [
+      "child anxiety therapist",
+      "school anxiety counseling for students",
+      "pediatric anxiety treatment center",
+      "cognitive behavioral therapy for children"
+    ]
+  },
+  "Depression": {
+    "search_keywords": [
+      "adolescent depression counseling",
+      "child and teen mental health therapist",
+      "youth depression treatment program",
+      "family therapy for teen depression"
+    ]
+  },
+  "Learning Disability": {
+    "search_keywords": [
+      "learning disability tutoring center",
+      "special education tutoring services",
+      "educational therapist for learning disabilities",
+      "psychoeducational evaluation for learning disability"
+    ]
+  },
+  "Speech/Language": {
+    "search_keywords": [
+      "pediatric speech language pathologist",
+      "childhood speech therapy clinic",
+      "language delay therapy for children",
+      "school speech and language services"
+    ]
+  },
+  "Behavioral": {
+    "search_keywords": [
+      "child behavioral therapy center",
+      "positive behavior support services for children",
+      "pediatric behavioral health clinic",
+      "parent behavior management training"
+    ]
+  },
+  "Other": {
+    "search_keywords": [
+      "special education support services",
+      "learning support center for students",
+      "child developmental specialist",
+      "educational advocacy and tutoring"
+    ]
+  }
+}

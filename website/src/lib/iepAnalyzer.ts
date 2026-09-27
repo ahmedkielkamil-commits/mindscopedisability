@@ -1,82 +1,7 @@
-import os
-import re
-import json
-from pathlib import Path
+import { callAI } from "./aiClient.js";
+import { parseModelObject } from "./parseModelJson.js";
 
-import chromadb
-from chromadb.utils import embedding_functions
-
-from ai_client import callAI
-from docBreakdown import extract_text_from_pdf
-
-# Folder this file lives in (project root for PDF discovery + Chroma DB path).
-_PROJECT_DIR = Path(__file__).resolve().parent
-# Single Chroma collection for all project PDFs used as IEP reference material.
-_RAG_COLLECTION = None
-
-
-def _chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> list[str]:
-    """Split long PDF text into overlapping chunks for embedding."""
-    chunks, start = [], 0
-    while start < len(text):
-        chunks.append(text[start : start + chunk_size])
-        start += chunk_size - overlap
-    return chunks
-
-
-def _get_rag_collection():
-    """Lazy-init persistent Chroma store under ./chroma_db."""
-    global _RAG_COLLECTION
-    if _RAG_COLLECTION is None:
-        client = chromadb.PersistentClient(path=str(_PROJECT_DIR / "chroma_db"))
-        emb = embedding_functions.SentenceTransformerEmbeddingFunction(
-            model_name="all-MiniLM-L6-v2"
-        )
-        _RAG_COLLECTION = client.get_or_create_collection(
-            name="iep_pdf_rag", embedding_function=emb
-        )
-    return _RAG_COLLECTION
-
-
-def _iter_project_pdfs():
-    """All .pdf files in the RAGContent folder."""
-    yield from sorted((_PROJECT_DIR / "RAGContent").glob("*.pdf"))
-
-
-def _ingest_project_pdfs_into_rag() -> None:
-    """Read each project PDF, chunk, embed, and store new chunks only (idempotent)."""
-    col = _get_rag_collection()
-    # Already-stored chunk ids so we do not duplicate embeddings on every run.
-    g = col.get()
-    existing = set((g.get("ids") if g else None) or [])
-    for path in _iter_project_pdfs():
-        text = extract_text_from_pdf(path.read_bytes())  # PyMuPDF via docBreakdown
-        chunks = _chunk_text(text)  # small windows so embeddings stay meaningful
-        new_ids, docs, metas = [], [], []
-        for i, chunk in enumerate(chunks):
-            cid = f"{path.stem}_chunk_{i}"  # stable id per file + chunk index
-            if cid not in existing:
-                new_ids.append(cid)
-                docs.append(chunk)
-                metas.append({"source": path.name, "chunk_index": i})
-        if new_ids:
-            col.add(ids=new_ids, documents=docs, metadatas=metas)  # Chroma embeds + stores
-            existing.update(new_ids)
-
-
-def _retrieve_rag_context(query: str, n_results: int = 5) -> str:
-    """Vector-search chunks most similar to the query (IEP text) and format for the prompt."""
-    col = _get_rag_collection()
-    if col.count() == 0:
-        return ""  # no PDFs indexed yet
-    n = min(n_results, col.count())
-    r = col.query(query_texts=[query], n_results=n)  # embedding similarity to IEP excerpt
-    parts = []
-    for doc, meta in zip(r["documents"][0], r["metadatas"][0]):
-        parts.append(f"[{meta['source']}]\n{doc}")
-    return "\n\n---\n\n".join(parts)
-
-system_prompt = """
+export const systemPrompt = `
 You are an expert IEP analyst for CarePath, an application that helps parents of children 
 with learning disabilities navigate the special education system. Your role is to evaluate 
 IEP documents against federal requirements under the Individuals with Disabilities Education 
@@ -97,7 +22,7 @@ a plain-English reasoning statement explaining why it received that score.
 
 ──────────────────────────────────────────────────────────────
 SECTION 1: Present Levels of Academic Achievement and 
-           Functional Performance (PLAAFP)
+          Functional Performance (PLAAFP)
 ──────────────────────────────────────────────────────────────
 Federal requirement (34 CFR § 300.320(a)(1)):
 The IEP must include a statement of the child's present levels of academic achievement 
@@ -395,44 +320,51 @@ OUTPUT RULES
 - sections array must always contain all 8 sections evaluated in order
 - empty arrays are valid and expected when no issues of that severity are found
 - reasoning should be 1-3 plain-English sentences a non-expert parent can understand
-"""
+`;
 
-def _parse_model_json(raw):
-    """Parse first JSON object from model output; strip markdown fences if present."""
-    if isinstance(raw, dict):
-        if raw.get("error"):
-            raise ValueError(raw.get("error", str(raw)))
-        return raw
-    if raw is None:
-        raise ValueError("Empty response from model.")
-    s = raw.strip()
-    s = re.sub(r"^```(?:json)?\s*\n?", "", s, flags=re.IGNORECASE)
-    s = re.sub(r"\n?```\s*$", "", s)
-    start = s.find("{")
-    if start == -1:
-        raise ValueError("Model did not return JSON starting with {.")
-    return json.JSONDecoder().raw_decode(s, start)[0]
+export interface IepSection {
+  name: string;
+  score: number;
+  reasoning: string;
+}
 
+export interface IepRedFlag {
+  section: string;
+  issue: string;
+}
 
-def analyze_iep(iep_text: str) -> dict:
-    """Run IEP analysis on plain text (from PDF/DOCX/TXT). Returns a dict matching results.json shape."""
-    text = (iep_text or "").strip()
-    if not text:
-        raise ValueError("No IEP text to analyze.")
+export interface IepAnalysis {
+  sections: IepSection[];
+  red_flags: {
+    minor: IepRedFlag[];
+    caution: IepRedFlag[];
+    critical: IepRedFlag[];
+  };
+  summary: string;
+}
 
-    # 1) Index every project PDF into Chroma (skips chunks already stored).
-    _ingest_project_pdfs_into_rag()
-    # 2) Fetch the most relevant PDF chunks for this IEP and prepend to the system prompt.
-    rag_ctx = _retrieve_rag_context(text[:12_000], n_results=5)
-    sys = system_prompt
-    if rag_ctx:
-        sys = (
-            f"{system_prompt}\n\n"
-            "## Retrieved reference (PDFs in your project folder)\n"
-            "Use this material to ground citations; if it conflicts with the IEP text, prefer the IEP.\n\n"
-            f"{rag_ctx}"
-        )
+/** Parse first JSON object from model output; strip markdown fences if present. */
+export function parseModelJson(raw: unknown): IepAnalysis {
+  if (raw === null || raw === undefined) {
+    throw new Error("Empty response from model.");
+  }
+  if (typeof raw === "object") {
+    const obj = raw as Record<string, unknown>;
+    if (obj.error) {
+      throw new Error(String(obj.error));
+    }
+    return obj as unknown as IepAnalysis;
+  }
+  return parseModelObject(String(raw)) as IepAnalysis;
+}
 
-    raw = callAI(sys, text[:120_000])
-    return _parse_model_json(raw)
+/** Run IEP analysis on plain text (from PDF/DOCX/TXT). */
+export async function analyzeIep(iepText: string): Promise<IepAnalysis> {
+  const text = (iepText ?? "").trim();
+  if (!text) {
+    throw new Error("No IEP text to analyze.");
+  }
 
+  const raw = await callAI(systemPrompt, text.slice(0, 120_000));
+  return parseModelJson(raw);
+}
