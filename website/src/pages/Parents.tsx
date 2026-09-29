@@ -51,6 +51,7 @@ const tools = [
       </svg>
     ),
     to: "/parents/facilities",
+    comingSoon: true,
   },
   {
     id: "iep",
@@ -260,46 +261,75 @@ export default function Parents() {
           </div>
 
           <div className="flex flex-col gap-4">
-            {tools.map((tool) => (
-              <Link
-                key={tool.id}
-                to={tool.to}
-                className="rounded-2xl flex items-center gap-6 p-6 md:p-7 transition-opacity hover:opacity-90"
-                style={{
-                  backgroundColor: "var(--card)",
-                  border: "1px solid var(--border)",
-                }}
-              >
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+            {tools.map((tool) => {
+              const inner = (
+                <>
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                    style={{
+                      backgroundColor: "var(--secondary)",
+                      color: "comingSoon" in tool && tool.comingSoon ? "var(--muted-foreground)" : "var(--primary)",
+                    }}
+                  >
+                    {tool.icon}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className="text-xs font-semibold tracking-widest uppercase mb-1"
+                      style={{ color: "var(--muted-foreground)" }}
+                    >
+                      {tool.label}
+                    </p>
+                    <h2 className="font-display text-2xl mb-1" style={{ color: "var(--foreground)" }}>
+                      {tool.title}
+                    </h2>
+                    <p className="text-sm leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
+                      {tool.description}
+                    </p>
+                  </div>
+
+                  <span
+                    className="hidden sm:inline text-sm font-semibold shrink-0"
+                    style={{ color: "comingSoon" in tool && tool.comingSoon ? "var(--muted-foreground)" : "var(--primary)" }}
+                  >
+                    {"comingSoon" in tool && tool.comingSoon ? "Coming soon" : "Open"}
+                  </span>
+                </>
+              );
+
+              if ("comingSoon" in tool && tool.comingSoon) {
+                return (
+                  <div
+                    key={tool.id}
+                    className="rounded-2xl flex items-center gap-6 p-6 md:p-7"
+                    style={{
+                      backgroundColor: "var(--card)",
+                      border: "1px solid var(--border)",
+                      opacity: 0.7,
+                      pointerEvents: "none",
+                    }}
+                    aria-disabled="true"
+                  >
+                    {inner}
+                  </div>
+                );
+              }
+
+              return (
+                <Link
+                  key={tool.id}
+                  to={tool.to}
+                  className="rounded-2xl flex items-center gap-6 p-6 md:p-7 transition-opacity hover:opacity-90"
                   style={{
-                    backgroundColor: "var(--secondary)",
-                    color: "var(--primary)",
+                    backgroundColor: "var(--card)",
+                    border: "1px solid var(--border)",
                   }}
                 >
-                  {tool.icon}
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <p
-                    className="text-xs font-semibold tracking-widest uppercase mb-1"
-                    style={{ color: "var(--muted-foreground)" }}
-                  >
-                    {tool.label}
-                  </p>
-                  <h2 className="font-display text-2xl mb-1" style={{ color: "var(--foreground)" }}>
-                    {tool.title}
-                  </h2>
-                  <p className="text-sm leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
-                    {tool.description}
-                  </p>
-                </div>
-
-                <span className="hidden sm:inline text-sm font-semibold shrink-0" style={{ color: "var(--primary)" }}>
-                  Open
-                </span>
-              </Link>
-            ))}
+                  {inner}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>

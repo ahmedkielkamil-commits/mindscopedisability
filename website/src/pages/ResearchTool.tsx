@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { callAI } from "../lib/aiClient";
+import { processFeature } from "../lib/aiClient";
 import {
-  SYSTEM_PROMPT,
   extractTextFromFile,
   extractTextFromUrl,
   parseSlidesOutput,
@@ -30,7 +29,7 @@ export default function ResearchTool() {
         throw new Error("No text could be extracted from that source.");
       }
 
-      const raw = await callAI(SYSTEM_PROMPT, text.slice(0, 50_000));
+      const raw = await processFeature("research-to-pptx", text.slice(0, 50_000));
       const slides = parseSlidesOutput(raw);
       if (slides.length === 0) {
         throw new Error("The model returned no slides.");

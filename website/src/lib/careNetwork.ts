@@ -94,6 +94,9 @@ interface ChronicData {
 // TODO: migrate to Azure Key Vault
 // Direct fetch keeps the Node-only Tavily client (and its proxy agent) out of the browser.
 async function tavilySearch(query: string): Promise<{ results: TavilyLikeResult[] }> {
+  if (!tavilyApiKey) {
+    throw new Error("Facility search is not wired yet. Tavily will move to an Azure Function later.");
+  }
   const response = await fetch("https://api.tavily.com/search", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

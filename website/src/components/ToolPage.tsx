@@ -3,7 +3,7 @@ import { Link } from "react-router";
 
 const toolLinks = [
   { to: "/parents/research", label: "Research" },
-  { to: "/parents/facilities", label: "Facilities" },
+  { to: "/parents/facilities", label: "Facilities", comingSoon: true },
   { to: "/parents/iep", label: "IEP" },
 ];
 
@@ -43,6 +43,22 @@ export function ToolPage({
         <nav className="flex gap-6 mb-8" style={{ borderBottom: "1px solid var(--border)" }}>
           {toolLinks.map((link) => {
             const active = link.to === current;
+            if (link.comingSoon) {
+              return (
+                <span
+                  key={link.to}
+                  className="pb-3 text-sm font-semibold"
+                  style={{
+                    color: "var(--muted-foreground)",
+                    borderBottom: "2px solid transparent",
+                    marginBottom: "-1px",
+                    opacity: 0.6,
+                  }}
+                >
+                  {link.label} · Coming soon
+                </span>
+              );
+            }
             return (
               <Link
                 key={link.to}

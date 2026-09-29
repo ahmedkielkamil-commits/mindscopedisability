@@ -1,94 +1,60 @@
-import {
-  agentEndpoint,
-  agentName,
-  azureToken,
-} from "virtual:azure-env";
+import { functionKey, processUrl } from "virtual:azure-env";
 
-// TODO: migrate to Azure Key Vault
-// The browser cannot sign in itself. Vite mints a token from the service
-// principal in website/.env and places it in the page. Restart Vite after it expires.
-
-interface AgentResponse {
-  output_text?: string;
-  output?: Array<{
-    type?: string;
-    content?: Array<{ type?: string; text?: string }>;
-  }>;
-  error?: { message?: string };
+function processEndpoint(): string {
+  const raw = (processUrl || "").trim();
+  if (!raw) {
+    throw new Error("Missing default_domain for the Azure Function. Add it to website/.env and restart Vite.");
+  }
+  const withProtocol = raw.startsWith("http") || raw.startsWith("/") ? raw : `https://${raw}`;
+  const url = new URL(withProtocol, typeof window !== "undefined" ? window.location.origin : "http://localhost");
+  if (functionKey) {
+    url.searchParams.set("code", functionKey);
+  }
+  return url.toString();
 }
 
-function llmEndpoint(): string {
-  const endpoint = agentEndpoint.replace(/\/+$/, "");
-  const last = endpoint.split("/").pop() ?? "";
-  if (!endpoint || last === "projects" || last === "api") {
-    throw new Error(
-      "Agent_Endpoint must include the Foundry project name, for example " +
-        "https://<resource>.services.ai.azure.com/api/projects/<project-name>.",
-    );
+function functionError(text: string): string {
+  try {
+    const parsed = JSON.parse(text) as { error?: string };
+    return parsed.error ?? "";
+  } catch {
+    return "";
   }
-  return endpoint;
 }
 
-function readOutputText(data: AgentResponse): string {
-  if (data.output_text?.trim()) {
-    return data.output_text;
-  }
-  for (const item of data.output ?? []) {
-    if (item.type !== "message") continue;
-    for (const part of item.content ?? []) {
-      if (part.type === "output_text" && part.text?.trim()) {
-        return part.text;
-      }
-    }
-  }
-  return "";
-}
+export type ProcessFeature = "iep-analyzer" | "research-to-pptx";
 
-/**
- * Call the configured Azure Foundry agent from the browser.
- *
- * Named agents reject a separate `instructions` field, so the system and user
- * prompts are sent as one input blob.
- */
-export async function callAI(systemPrompt: string, userPrompt: string): Promise<string> {
-  if (!agentName) {
-    throw new Error("Missing Agent_Name for the Azure agent.");
-  }
-  if (!azureToken) {
-    throw new Error(
-      "Missing Azure token. Set AZURE_TENANT_ID, AZURE_CLIENT_ID, and AZURE_CLIENT_SECRET, then restart the dev server.",
-    );
+/** Call the Azure Function POST /api/process for IEP analysis or slides. */
+export async function processFeature(feature: ProcessFeature, content: string): Promise<string> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (functionKey) {
+    headers["x-functions-key"] = functionKey;
   }
 
-  const prompt =
-    systemPrompt && systemPrompt.trim()
-      ? `${systemPrompt.trim()}\n\n---\n\n${userPrompt}`
-      : userPrompt;
-
-  const url =
-    `${llmEndpoint()}/agents/${encodeURIComponent(agentName)}` +
-    "/endpoint/protocols/openai/responses?api-version=v1";
-
-  const response = await fetch(url, {
+  const response = await fetch(processEndpoint(), {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${azureToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      input: prompt,
-      max_output_tokens: 16384,
-    }),
+    headers,
+    body: JSON.stringify({ feature, content }),
   });
 
-  const data = (await response.json()) as AgentResponse;
-  if (!response.ok) {
-    throw new Error(data.error?.message || `Azure agent request failed (${response.status}).`);
-  }
+  const text = await response.text();
+  const errorMessage = functionError(text);
 
-  const text = readOutputText(data);
+  if (!response.ok) {
+    throw new Error(errorMessage || `Function request failed (${response.status}).`);
+  }
+  if (errorMessage) {
+    throw new Error(errorMessage);
+  }
   if (!text.trim()) {
-    throw new Error("Azure agent returned empty text output");
+    throw new Error("The Azure Function returned an empty response.");
   }
   return text;
+}
+
+/** Facility search still needs its own Function. */
+export async function callAI(systemPrompt: string, userPrompt: string): Promise<string> {
+  void systemPrompt;
+  void userPrompt;
+  throw new Error("Facility search is not on the Azure Function yet.");
 }
