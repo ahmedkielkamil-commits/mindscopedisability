@@ -41,6 +41,7 @@ function azureEnvPlugin(mode: string): Plugin {
         `export const functionKey = ${JSON.stringify(browserFunctionKey)};`,
         `export const tavilyApiKey = ${JSON.stringify(env.TAVILY_API_KEY || "")};`,
         `export const googlePlacesApiKey = ${JSON.stringify(env.GOOGLE_PLACES_API_KEY || "")};`,
+        `export const contactEmail = ${JSON.stringify(env.CONTACT_EMAIL || "ahmed.kielkamil@gmail.com")};`,
       ].join("\n");
     },
   };

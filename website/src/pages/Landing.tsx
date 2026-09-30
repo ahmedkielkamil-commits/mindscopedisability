@@ -194,13 +194,16 @@ export default function Landing() {
     <>
       {/* ── Hero ── */}
       <section
-        className="min-h-[calc(100vh-80px)] flex px-6 md:px-16 lg:px-20"
-        style={{ backgroundColor: "var(--background)" }}
+        className="flex px-6 md:px-16 lg:px-20"
+        style={{
+          backgroundColor: "var(--background)",
+          minHeight: "calc(100vh - 5rem - 3.75rem)",
+        }}
       >
-        <div className="w-full max-w-7xl mx-auto grid md:grid-cols-[1.1fr_0.9fr] gap-x-16 items-start py-8">
+        <div className="w-full max-w-7xl mx-auto grid md:grid-cols-[1.1fr_0.9fr] gap-x-16 items-start pt-8 pb-10">
 
           {/* Left: copy */}
-          <div className="max-w-[680px] flex flex-col min-h-[610px] pt-4">
+          <div className="max-w-[680px] flex flex-col pt-4">
 
             <div>
               <p
@@ -355,62 +358,45 @@ export default function Landing() {
           </div>
 
           {/* Right: healthcare illustration */}
-          <div className="hidden md:flex justify-center pt-20">
+          <div className="hidden md:flex justify-center pt-12">
             <HealthcareIllustration />
           </div>
         </div>
       </section>
 
-      {/* ── Why MindScope exists ── */}
+      {/* ── Why we exist ── */}
       <section
-        style={{
-          borderTop: "1px solid #E2D9C0",
-          backgroundColor: "var(--card)",
-        }}
+        id="why"
+        className="scroll-mt-24"
+        style={{ backgroundColor: "var(--card)", borderTop: "1px solid var(--border)" }}
       >
-        <div className="max-w-5xl mx-auto px-6 md:px-10 py-20 grid md:grid-cols-2 gap-12 items-center">
-          <div>
+        <div className="max-w-7xl mx-auto px-6 md:px-16 lg:px-20 pt-4 pb-16">
+          <a href="#why" className="flex flex-col items-center gap-1 mb-10 no-underline">
             <p
-              className="text-xs font-semibold tracking-widest uppercase mb-4"
+              className="text-xs font-semibold tracking-widest uppercase"
               style={{ color: "var(--muted-foreground)" }}
             >
               Why we exist
             </p>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path
+                d="M3 6l5 5 5-5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ color: "var(--muted-foreground)" }}
+              />
+            </svg>
+          </a>
 
-            <h2
-              className="font-display text-3xl md:text-4xl leading-snug mb-6"
-              style={{ color: "var(--foreground)" }}
-            >
-              Built from the inside of a broken system.
-            </h2>
-          </div>
-
-          <div>
-            <p
-              className="text-base leading-relaxed"
-              style={{ color: "var(--muted-foreground)" }}
-            >
-              Too many students with behavioral challenges and learning
-              differences fall through the cracks — not because no one cares,
-              but because the systems meant to help them are fragmented and
-              overloaded. MindScope was built by someone who experienced this
-              firsthand. We exist to give every guidance counselor the tools to
-              act, and every family the clarity to follow through.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Stat cards ── */}
-      <section style={{ backgroundColor: "var(--background)" }}>
-        <div className="max-w-5xl mx-auto px-6 md:px-10 py-16">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {stats.map((stat, i) => (
               <div
                 key={stat.value}
                 className="rounded-xl p-8 text-center"
                 style={{
-                  backgroundColor: i === 1 ? "var(--primary)" : "var(--card)",
+                  backgroundColor: i === 1 ? "var(--primary)" : "var(--background)",
                   border: i === 1 ? "none" : "1px solid var(--border)",
                 }}
               >

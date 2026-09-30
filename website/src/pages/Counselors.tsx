@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import counselorPreview from "../assets/counselor.png";
+import { MailSendChoice } from "../components/MailSendChoice";
 
 const steps = [
   {
@@ -30,6 +31,7 @@ export default function Counselors() {
     district: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [chooseMail, setChooseMail] = useState(false);
 
   const adminEmailHref = `mailto:admin@district.edu?subject=Please%20consider%20MindScope%20for%20our%20district&body=Hi%2C%0A%0AI%27ve%20been%20exploring%20MindScope%20and%20believe%20it%20could%20significantly%20help%20our%20counseling%20team.%20I%27d%20love%20for%20you%20to%20take%20a%20look.%0A%0Ahttps%3A%2F%2Fmindscope.com%2Fdistricts%0A%0AHappy%20to%20discuss%20further.`;
 
@@ -266,7 +268,7 @@ export default function Counselors() {
       </section>
 
       {/* ── Request Access ── */}
-      <section id="access" style={{ backgroundColor: "var(--background)" }}>
+      <section id="access" className="scroll-mt-24" style={{ backgroundColor: "var(--background)" }}>
         <div className="max-w-5xl mx-auto px-6 md:px-10 py-20">
           <div className="grid md:grid-cols-2 gap-12 items-start">
             {/* Left: context */}
@@ -432,18 +434,32 @@ export default function Counselors() {
                     }}
                   />
 
-                  <button
-                    onClick={() => {
-                      if (formData.email) setSubmitted(true);
-                    }}
-                    className="w-full py-3 rounded-lg font-semibold text-sm transition-all hover:opacity-90"
-                    style={{
-                      backgroundColor: "var(--primary)",
-                      color: "var(--primary-foreground)",
-                    }}
-                  >
-                    Keep me updated
-                  </button>
+                  {chooseMail ? (
+                    <MailSendChoice
+                      subject="MindScope counselor access request"
+                      fields={{
+                        Name: `${formData.firstName} ${formData.lastName}`.trim(),
+                        Email: formData.email,
+                        School: formData.school,
+                        District: formData.district,
+                      }}
+                      onSent={() => setSubmitted(true)}
+                    />
+                  ) : (
+                    <button
+                      onClick={() => {
+                        if (!formData.email) return;
+                        setChooseMail(true);
+                      }}
+                      className="w-full py-3 rounded-lg font-semibold text-sm transition-all hover:opacity-90"
+                      style={{
+                        backgroundColor: "var(--primary)",
+                        color: "var(--primary-foreground)",
+                      }}
+                    >
+                      Keep me updated
+                    </button>
+                  )}
                 </div>
               </div>
             ) : (

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { MailSendChoice } from "../components/MailSendChoice";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   ScatterChart, Scatter, Legend,
@@ -183,9 +184,21 @@ export default function Districts() {
     district: "", state: "", schools: "", challenge: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [chooseMail, setChooseMail] = useState(false);
 
   const handleSubmit = () => {
-    if (formData.email && formData.firstName) setSubmitted(true);
+    if (!formData.email || !formData.firstName) return;
+    setChooseMail(true);
+  };
+
+  const districtFields = {
+    Name: `${formData.firstName} ${formData.lastName}`.trim(),
+    Email: formData.email,
+    Phone: formData.phone,
+    District: formData.district,
+    State: formData.state,
+    Schools: formData.schools,
+    Challenge: formData.challenge,
   };
 
   return (
@@ -519,13 +532,21 @@ export default function Districts() {
                     className="w-full px-4 py-2.5 rounded-lg text-sm outline-none resize-none"
                     style={{ backgroundColor: "var(--secondary)", border: "1px solid var(--border)", color: "var(--foreground)" }}
                   />
-                  <button
-                    onClick={handleSubmit}
-                    className="w-full py-3 rounded-lg font-semibold text-sm transition-all hover:opacity-90"
-                    style={{ backgroundColor: "var(--primary)", color: "var(--primary-foreground)" }}
-                  >
-                    Request a Demo
-                  </button>
+                  {chooseMail ? (
+                    <MailSendChoice
+                      subject="MindScope district demo request"
+                      fields={districtFields}
+                      onSent={() => setSubmitted(true)}
+                    />
+                  ) : (
+                    <button
+                      onClick={handleSubmit}
+                      className="w-full py-3 rounded-lg font-semibold text-sm transition-all hover:opacity-90"
+                      style={{ backgroundColor: "var(--primary)", color: "var(--primary-foreground)" }}
+                    >
+                      Request a Demo
+                    </button>
+                  )}
                   <p className="text-xs text-center" style={{ color: "var(--muted-foreground)" }}>
                     We typically respond within 2 business days.
                   </p>

@@ -9,9 +9,9 @@ export default function Layout() {
         </Link>
 
         <nav className="flex items-center gap-6">
-          <a href="#" className="text-sm font-medium transition-opacity hover:opacity-70" style={{ color: "var(--muted-foreground)" }}>About</a>
-          <a href="#" className="text-sm font-medium transition-opacity hover:opacity-70" style={{ color: "var(--muted-foreground)" }}>Our Mission</a>
-          <a href="#" className="text-sm font-medium transition-opacity hover:opacity-70" style={{ color: "var(--muted-foreground)" }}>Contact</a>
+          <Link to="/" className="text-sm font-medium transition-opacity hover:opacity-70" style={{ color: "var(--muted-foreground)" }}>Home</Link>
+          <Link to="/about" className="text-sm font-medium transition-opacity hover:opacity-70" style={{ color: "var(--muted-foreground)" }}>About</Link>
+          <Link to="/counselors#access" className="text-sm font-medium transition-opacity hover:opacity-70" style={{ color: "var(--muted-foreground)" }}>Contact</Link>
         </nav>
       </header>
 
@@ -21,11 +21,13 @@ export default function Layout() {
 
       <footer style={{ borderTop: "1px solid var(--border)", backgroundColor: "var(--card)" }}>
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <img src="/Primary_Logo.png" alt="MindScope" className="h-7 w-auto object-contain" />
+          <Link to="/" className="flex items-center">
+            <img src="/Primary_Logo.png" alt="MindScope" className="h-7 w-auto object-contain" />
+          </Link>
           <div className="flex items-center gap-6 text-sm" style={{ color: "var(--muted-foreground)" }}>
-            <a href="mailto:contact@mindscope.com" className="hover:opacity-70 transition-opacity">Contact</a>
+            <Link to="/counselors#access" className="hover:opacity-70 transition-opacity">Contact</Link>
             <a href="#" className="hover:opacity-70 transition-opacity">Privacy Policy</a>
-            <a href="#" className="hover:opacity-70 transition-opacity">About the Team</a>
+            <Link to="/about#team" className="hover:opacity-70 transition-opacity">About the Team</Link>
           </div>
           <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>© 2025 MindScope. All rights reserved.</p>
         </div>
