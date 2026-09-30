@@ -1,16 +1,10 @@
-import { functionKey, processUrl } from "virtual:azure-env";
+import { PROCESS_URL } from "./siteConfig";
 
 function processEndpoint(): string {
-  const raw = (processUrl || "").trim();
-  if (!raw) {
-    throw new Error("Missing default_domain for the Azure Function. Add it to website/.env and restart Vite.");
+  if (import.meta.env.DEV) {
+    return "/api/process";
   }
-  const withProtocol = raw.startsWith("http") || raw.startsWith("/") ? raw : `https://${raw}`;
-  const url = new URL(withProtocol, typeof window !== "undefined" ? window.location.origin : "http://localhost");
-  if (functionKey) {
-    url.searchParams.set("code", functionKey);
-  }
-  return url.toString();
+  return PROCESS_URL;
 }
 
 function functionError(text: string): string {
@@ -26,14 +20,9 @@ export type ProcessFeature = "iep-analyzer" | "research-to-pptx";
 
 /** Call the Azure Function POST /api/process for IEP analysis or slides. */
 export async function processFeature(feature: ProcessFeature, content: string): Promise<string> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (functionKey) {
-    headers["x-functions-key"] = functionKey;
-  }
-
   const response = await fetch(processEndpoint(), {
     method: "POST",
-    headers,
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ feature, content }),
   });
 

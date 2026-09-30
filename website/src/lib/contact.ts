@@ -1,7 +1,7 @@
-import { contactEmail } from "virtual:azure-env";
+import { CONTACT_EMAIL } from "./siteConfig";
 
 export function inboxEmail(): string {
-  return (contactEmail || "ahmed.kielkamil@gmail.com").trim();
+  return CONTACT_EMAIL.trim();
 }
 
 function messageBody(fields: Record<string, string>): string {
