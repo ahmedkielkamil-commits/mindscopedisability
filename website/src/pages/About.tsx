@@ -1,7 +1,7 @@
 import ahmed from "../assets/ahmed-kiel-kamil.png";
 import aren from "../assets/aren-egwuekwe.png";
 import isaiah from "../assets/isaiah-johnson.png";
-import supreme from "../assets/supreme-constentine.jpg";
+import supreme from "../assets/supreme-constantine.jpg";
 
 const founders = [
   {
@@ -28,10 +28,9 @@ const founders = [
   {
     role: "CXO",
     name: "Supreme Constantine",
-    job: "North Carolina State University Master Student",
+    job: "North Carolina State University Masters Student",
     photo: supreme,
-    position: "center 68%",
-    zoom: 1.22,
+    position: "center 35%",
   },
 ];
 
@@ -85,7 +84,8 @@ export default function About() {
           </p>
         </div>
       </section>
-
+      
+      {/* Our Story Section */}
       <section style={{ backgroundColor: "var(--background)" }}>
         <div className="max-w-5xl mx-auto px-6 md:px-10 py-16 md:py-20">
           <p
@@ -94,6 +94,12 @@ export default function About() {
           >
             Our story
           </p>
+          <h2
+            className="font-display text-3xl md:text-4xl leading-snug mb-10"
+            style={{ color: "var(--foreground)" }}
+          >
+            From Experience to Solution
+          </h2>
           <div className="max-w-3xl space-y-6">
             {story.map((paragraph) => (
               <p
@@ -108,6 +114,7 @@ export default function About() {
         </div>
       </section>
 
+      {/* Founders Section */}
       <section id="team" className="scroll-mt-24" style={{ backgroundColor: "var(--card)" }}>
         <div className="max-w-5xl mx-auto px-6 md:px-10 py-16 md:py-20">
           <p
@@ -126,7 +133,7 @@ export default function About() {
             {founders.map((person) => (
               <article key={person.name}>
                 <div
-                  className="rounded-2xl overflow-hidden mb-4 aspect-square"
+                  className="w-[220px] h-[220px] rounded-2xl overflow-hidden mb-4"
                   style={{ border: "1px solid var(--border)" }}
                 >
                   <img
@@ -150,7 +157,7 @@ export default function About() {
                   {person.name}
                 </h3>
                 <p
-                  className="text-xs leading-snug rounded-lg px-2.5 py-2"
+                  className="text-xs text-center leading-snug rounded-lg px-2.5 py-2"
                   style={{
                     backgroundColor: "var(--secondary)",
                     color: "var(--muted-foreground)",
@@ -165,6 +172,7 @@ export default function About() {
         </div>
       </section>
 
+      {/* Disclaimer Section */}
       <section style={{ backgroundColor: "var(--background)" }}>
         <div className="max-w-5xl mx-auto px-6 md:px-10 py-16 md:py-20">
           <p

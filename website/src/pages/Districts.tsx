@@ -291,7 +291,7 @@ export default function Districts() {
       {/* ── Three C's — cream background, varied card treatment ── */}
       <section style={{ backgroundColor: "var(--background)" }}>
         <div className="max-w-5xl mx-auto px-6 md:px-10 py-20">
-          <div className="mb-12 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <div className="mb-10 flex flex-col gap-4">
             <div>
               <p className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: "var(--muted-foreground)" }}>
                 Built around three principles
@@ -300,7 +300,7 @@ export default function Districts() {
                 The three C's of MindScope.
               </h2>
             </div>
-            <p className="text-sm max-w-xs" style={{ color: "var(--muted-foreground)" }}>
+            <p className="text-sm max-w-lg" style={{ color: "var(--muted-foreground)" }}>
               Every feature flows from these commitments to districts, counselors, and families.
             </p>
           </div>
