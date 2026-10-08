@@ -1,6 +1,22 @@
-import { Link, Outlet } from "react-router";
+import { useEffect } from "react";
+import { Link, Outlet, useLocation } from "react-router";
 
 export default function Layout() {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.querySelector(location.hash);
+
+      if (element) {
+        element.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    }
+  }, [location]);
+
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}>
       <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10 py-5" style={{ backgroundColor: "var(--background)", borderBottom: "1px solid var(--border)" }}>
@@ -29,7 +45,7 @@ export default function Layout() {
             <a href="#" className="hover:opacity-70 transition-opacity">Privacy Policy</a>
             <Link to="/about#team" className="hover:opacity-70 transition-opacity">About the Team</Link>
           </div>
-          <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>© 2025 MindScope. All rights reserved.</p>
+          <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>© 2026 MindScope. All rights reserved.</p>
         </div>
       </footer>
     </div>

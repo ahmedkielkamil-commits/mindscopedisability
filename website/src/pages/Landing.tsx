@@ -370,25 +370,22 @@ export default function Landing() {
         className="scroll-mt-24"
         style={{ backgroundColor: "var(--card)", borderTop: "1px solid var(--border)" }}
       >
-        <div className="max-w-7xl mx-auto px-6 md:px-16 lg:px-20 pt-4 pb-16">
-          <a href="#why" className="flex flex-col items-center gap-1 mb-10 no-underline">
+        <div className="max-w-7xl mx-auto px-6 md:px-16 lg:px-20 py-20">
+          <div className="text-center mb-16 -mt-6">
             <p
-              className="text-xs font-semibold tracking-widest uppercase"
+              className="text-xs font-semibold tracking-widest uppercase mb-3"
               style={{ color: "var(--muted-foreground)" }}
             >
-              Why we exist
+              The support gap
             </p>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path
-                d="M3 6l5 5 5-5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{ color: "var(--muted-foreground)" }}
-              />
-            </svg>
-          </a>
+
+            <h2
+              className="font-display text-2xl md:text-3xl leading-snug"
+              style={{ color: "var(--foreground)" }}
+            >
+              Too many students are still falling through the cracks.
+            </h2>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {stats.map((stat, i) => (
