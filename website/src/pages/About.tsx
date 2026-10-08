@@ -3,13 +3,23 @@ import aren from "../assets/aren-egwuekwe.png";
 import isaiah from "../assets/isaiah-johnson.png";
 import supreme from "../assets/supreme-constantine.jpg";
 
-const founders = [
+type Founder = {
+  role: string;
+  name: string;
+  job: string;
+  photo: string;
+  position: string;
+  zoom?: string;
+};
+
+const founders: Founder[] = [
   {
     role: "CEO",
     name: "Ahmed Kiel-Kamil",
     job: "Amazon Logistics Specialist",
     photo: ahmed,
     position: "center 20%",
+    zoom: "",
   },
   {
     role: "CTO",
@@ -17,6 +27,7 @@ const founders = [
     job: "Google Software Engineer",
     photo: aren,
     position: "center 18%",
+    zoom: "",
   },
   {
     role: "CFO",
@@ -24,6 +35,7 @@ const founders = [
     job: "John Hopkins Masters Student",
     photo: isaiah,
     position: "center 22%",
+    zoom: "",
   },
   {
     role: "CXO",
@@ -31,6 +43,7 @@ const founders = [
     job: "North Carolina State University Masters Student",
     photo: supreme,
     position: "center 35%",
+    zoom: "",
   },
 ];
 
